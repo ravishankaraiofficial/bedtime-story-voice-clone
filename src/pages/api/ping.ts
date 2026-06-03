@@ -3,7 +3,13 @@ import type { APIRoute } from 'astro';
 export const GET: APIRoute = async ({ locals }) => {
   try {
     // 1. Read API Key safely: from Cloudflare runtime env if available, otherwise fallback to local .env
-    const cloudflareEnv = (locals as any)?.runtime?.env;
+    let cloudflareEnv: any;
+    try {
+      cloudflareEnv = (locals as any)?.runtime?.env;
+    } catch (e) {
+      // Astro v6 throws if we try to access locals.runtime.env
+      cloudflareEnv = undefined;
+    }
     const apiKey = cloudflareEnv?.GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY;
 
     if (!apiKey) {
