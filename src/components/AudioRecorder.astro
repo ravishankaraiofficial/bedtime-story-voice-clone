@@ -1,0 +1,547 @@
+---
+---
+<audio-recorder>
+  <!-- Recorder Screen -->
+  <div class="recorder-container" id="recorderContainer">
+    <button aria-label="Record story ideas" class="record-button" id="recordBtn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mic-icon"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+    </button>
+    
+    <div id="statusText" class="status-text" aria-live="polite">
+      Tap to record
+    </div>
+    <div id="errorText" class="error-text"></div>
+    <button id="retryBtn" class="reset-button" style="display: none; margin-top: 1rem;">Retry</button>
+  </div>
+
+  <!-- Story Screen (Hidden by default) -->
+  <div class="story-container" id="storyContainer" style="display: none;">
+    <div id="ttsStatus" class="tts-status" aria-live="polite">Preparing the voice…</div>
+    
+    <div id="playbackControls" class="playback-controls" style="display: none;">
+      <button id="playPauseBtn" class="control-btn" aria-label="Play or Pause">
+        <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <button id="loopBtn" class="loop-btn" aria-label="Toggle Loop">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+      </button>
+    </div>
+    
+    <button id="tapToPlayBtn" class="tap-play-btn" style="display: none;">Tap to play</button>
+
+    <div id="storyText" class="story-text" aria-live="polite"></div>
+    <button id="resetBtn" class="reset-button">Record a new story</button>
+  </div>
+</audio-recorder>
+
+<style>
+  audio-recorder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .recorder-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .record-button {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: none;
+    background-color: #111827; /* Very dark base */
+    color: #df9253; /* Soft warm gold */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    outline: none;
+    /* Soft diffused light effect */
+    box-shadow: 0 0 40px rgba(223, 146, 83, 0.08), inset 0 0 0 1px rgba(223, 146, 83, 0.2);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .record-button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 50px rgba(223, 146, 83, 0.15), inset 0 0 0 1px rgba(223, 146, 83, 0.3);
+  }
+
+  .record-button:active {
+    transform: scale(0.97);
+  }
+
+  .record-button:focus-visible {
+    box-shadow: 0 0 0 4px #05070d, 0 0 0 6px #df9253;
+  }
+
+  .record-button.is-recording {
+    background-color: #df9253;
+    color: #05070d;
+    transform: scale(1.08);
+    box-shadow: 0 0 60px rgba(223, 146, 83, 0.25);
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .record-button {
+      transition: none;
+    }
+    .record-button:hover, .record-button:active, .record-button.is-recording {
+      transform: none;
+    }
+  }
+
+  .status-text {
+    font-size: 1.05rem;
+    color: #9c9990;
+    font-variant-numeric: tabular-nums;
+    min-height: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .error-text {
+    color: #cf6679; /* Soft muted red for errors */
+    font-size: 0.85rem;
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+
+  /* --- Neo Shen Story Container Styles --- */
+  .story-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    animation: fadeIn 0.8s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .story-text {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 1.15rem; /* Min 18px */
+    line-height: 1.85; /* Comfortable line spacing */
+    color: var(--text-primary);
+    text-align: left;
+    margin-bottom: 3rem;
+    width: 100%;
+  }
+
+  /* Make story paragraphs look like a real book */
+  .story-text :global(p) {
+    margin-bottom: 1.5em;
+    text-wrap: pretty;
+  }
+
+  .tts-status {
+    font-size: 0.95rem;
+    color: #9c9990;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+    min-height: 1.5rem;
+  }
+
+  .playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 0.5rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 3rem;
+    border: 1px solid rgba(223, 146, 83, 0.1);
+  }
+
+  .control-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background-color: #df9253; /* Warm gold */
+    color: #05070d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 0 20px rgba(223, 146, 83, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .control-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(223, 146, 83, 0.3);
+  }
+
+  .control-btn:focus-visible {
+    box-shadow: 0 0 0 3px #05070d, 0 0 0 5px #df9253;
+  }
+
+  .loop-btn {
+    background: transparent;
+    border: none;
+    color: #9c9990;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+    outline: none;
+  }
+
+  .loop-btn:hover {
+    color: #df9253;
+  }
+  
+  .loop-btn.active {
+    color: #df9253;
+  }
+
+  .loop-btn:focus-visible {
+    box-shadow: 0 0 0 2px #df9253;
+  }
+
+  .tap-play-btn {
+    background-color: transparent;
+    color: #df9253;
+    border: 1px solid #df9253;
+    padding: 1rem 2rem;
+    border-radius: 2rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+  }
+
+  .tap-play-btn:hover {
+    background-color: rgba(223, 146, 83, 0.1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .story-container {
+      animation: none;
+    }
+    .control-btn {
+      transition: none;
+    }
+    .control-btn:hover {
+      transform: none;
+    }
+  }
+
+  .reset-button {
+    background-color: transparent;
+    color: #df9253; /* Warm gold */
+    border: 1px solid rgba(223, 146, 83, 0.3);
+    padding: 0.8rem 1.5rem;
+    border-radius: 2rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+    font-family: system-ui, sans-serif;
+  }
+
+  .reset-button:hover {
+    background-color: rgba(223, 146, 83, 0.1);
+    border-color: rgba(223, 146, 83, 0.6);
+  }
+
+  .reset-button:focus-visible {
+    box-shadow: 0 0 0 2px #05070d, 0 0 0 4px #df9253;
+  }
+</style>
+
+<script>
+  class AudioRecorder extends HTMLElement {
+    constructor() {
+      super();
+      this.btn = this.querySelector('#recordBtn');
+      this.statusText = this.querySelector('#statusText');
+      this.errorText = this.querySelector('#errorText');
+      
+      this.recorderContainer = this.querySelector('#recorderContainer');
+      this.storyContainer = this.querySelector('#storyContainer');
+      this.storyText = this.querySelector('#storyText');
+      this.resetBtn = this.querySelector('#resetBtn');
+      this.retryBtn = this.querySelector('#retryBtn');
+      
+      this.ttsStatus = this.querySelector('#ttsStatus');
+      this.playbackControls = this.querySelector('#playbackControls');
+      this.playPauseBtn = this.querySelector('#playPauseBtn');
+      this.playIcon = this.querySelector('#playIcon');
+      this.pauseIcon = this.querySelector('#pauseIcon');
+      this.loopBtn = this.querySelector('#loopBtn');
+      this.tapToPlayBtn = this.querySelector('#tapToPlayBtn');
+      
+      this.mediaRecorder = null;
+      this.audioChunks = [];
+      this.isRecording = false;
+      this.timerInterval = null;
+      this.secondsElapsed = 0;
+      this.maxSeconds = 120; // 2 minutes max
+      this.stream = null;
+      this.lastAudioBlob = null; // Store for retries
+      this.storyAudio = null;
+      this.audioUrl = null;
+      
+      this.btn.addEventListener('click', () => this.toggleRecording());
+      this.resetBtn.addEventListener('click', () => this.resetUI());
+      this.retryBtn.addEventListener('click', () => this.submitAudio(this.lastAudioBlob));
+      this.playPauseBtn.addEventListener('click', () => this.togglePlayback());
+      this.loopBtn.addEventListener('click', () => this.toggleLoop());
+      this.tapToPlayBtn.addEventListener('click', () => {
+        this.tapToPlayBtn.style.display = 'none';
+        this.playbackControls.style.display = 'flex';
+        this.storyAudio.play();
+      });
+    }
+
+    formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    async getSupportedMimeType() {
+      const types = ['audio/webm', 'audio/mp4'];
+      for (const t of types) {
+        if (MediaRecorder.isTypeSupported(t)) {
+          return t;
+        }
+      }
+      return '';
+    }
+
+    async toggleRecording() {
+      this.errorText.textContent = '';
+      this.retryBtn.style.display = 'none';
+      
+      if (this.isRecording) {
+        this.stopRecording();
+      } else {
+        await this.startRecording();
+      }
+    }
+
+    async startRecording() {
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        this.errorText.textContent = "Microphone access is needed. Please enable it in your browser settings and reload.";
+        return;
+      }
+
+      const mimeType = await this.getSupportedMimeType();
+      if (!mimeType) {
+        this.errorText.textContent = "Your browser does not support audio recording.";
+        return;
+      }
+
+      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+      this.audioChunks = [];
+
+      this.mediaRecorder.addEventListener('dataavailable', event => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      });
+
+      this.mediaRecorder.addEventListener('stop', () => {
+        this.handleStop();
+      });
+
+      this.mediaRecorder.start();
+      this.isRecording = true;
+      this.btn.classList.add('is-recording');
+      this.secondsElapsed = 0;
+      
+      this.statusText.textContent = `Recording… 0:00`;
+      
+      this.timerInterval = setInterval(() => {
+        this.secondsElapsed++;
+        this.statusText.textContent = `Recording… ${this.formatTime(this.secondsElapsed)}`;
+        
+        if (this.secondsElapsed >= this.maxSeconds) {
+          this.stopRecording();
+        }
+      }, 1000);
+    }
+
+    stopRecording() {
+      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+        this.mediaRecorder.stop();
+      }
+      if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop());
+      }
+      clearInterval(this.timerInterval);
+      this.isRecording = false;
+      this.btn.classList.remove('is-recording');
+    }
+
+    async handleStop() {
+      const blob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType });
+      this.lastAudioBlob = blob;
+      await this.submitAudio(blob);
+    }
+
+    async submitAudio(blob) {
+      if (!blob) return;
+      
+      this.statusText.textContent = 'Creating your story…';
+      this.errorText.textContent = '';
+      this.retryBtn.style.display = 'none';
+      this.btn.style.pointerEvents = 'none'; // Disable record button while loading
+      this.btn.style.opacity = '0.5';
+      
+      const formData = new FormData();
+      formData.append('audio', blob, 'story.webm');
+
+      try {
+        const response = await fetch('/api/story', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to generate story");
+        }
+
+        this.showStory(data.story);
+      } catch (err) {
+        console.error("Error posting to /api/story:", err);
+        this.statusText.textContent = 'Failed';
+        this.errorText.textContent = "Something went wrong creating the story. Please try again.";
+        this.retryBtn.style.display = 'inline-block';
+      } finally {
+        this.btn.style.pointerEvents = 'auto';
+        this.btn.style.opacity = '1';
+      }
+    }
+
+    showStory(storyText) {
+      this.recorderContainer.style.display = 'none';
+      this.storyContainer.style.display = 'flex';
+      
+      // Parse story text into paragraphs
+      const paragraphs = storyText.split('\n').filter(p => p.trim() !== '');
+      this.storyText.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+      
+      this.storyText.setAttribute('aria-live', 'polite');
+      
+      // Automatically fetch TTS
+      this.fetchVoice(storyText);
+    }
+
+    async fetchVoice(text) {
+      this.ttsStatus.style.display = 'block';
+      this.ttsStatus.textContent = 'Preparing the voice…';
+      this.playbackControls.style.display = 'none';
+      this.tapToPlayBtn.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        
+        if (!response.ok) {
+          throw new Error('TTS API failed');
+        }
+        
+        const blob = await response.blob();
+        this.audioUrl = URL.createObjectURL(blob);
+        this.storyAudio = new Audio(this.audioUrl);
+        
+        this.storyAudio.addEventListener('play', () => {
+          this.playIcon.style.display = 'none';
+          this.pauseIcon.style.display = 'block';
+        });
+        
+        this.storyAudio.addEventListener('pause', () => {
+          this.playIcon.style.display = 'block';
+          this.pauseIcon.style.display = 'none';
+        });
+        
+        this.storyAudio.addEventListener('ended', () => {
+          if (!this.storyAudio.loop) {
+            this.playIcon.style.display = 'block';
+            this.pauseIcon.style.display = 'none';
+          }
+        });
+        
+        this.ttsStatus.style.display = 'none';
+        
+        // Attempt autoplay
+        try {
+          await this.storyAudio.play();
+          this.playbackControls.style.display = 'flex';
+        } catch (err) {
+          // Autoplay blocked
+          this.tapToPlayBtn.style.display = 'inline-block';
+        }
+      } catch (err) {
+        console.error("Error fetching TTS:", err);
+        this.ttsStatus.textContent = 'Voice is unavailable right now — you can read the story aloud yourself.';
+      }
+    }
+
+    togglePlayback() {
+      if (!this.storyAudio) return;
+      if (this.storyAudio.paused) {
+        this.storyAudio.play();
+      } else {
+        this.storyAudio.pause();
+      }
+    }
+
+    toggleLoop() {
+      if (!this.storyAudio) return;
+      this.storyAudio.loop = !this.storyAudio.loop;
+      if (this.storyAudio.loop) {
+        this.loopBtn.classList.add('active');
+      } else {
+        this.loopBtn.classList.remove('active');
+      }
+    }
+
+    resetUI() {
+      this.storyContainer.style.display = 'none';
+      this.recorderContainer.style.display = 'flex';
+      this.statusText.textContent = 'Tap to record';
+      this.errorText.textContent = '';
+      this.retryBtn.style.display = 'none';
+      this.storyText.innerHTML = '';
+      this.audioChunks = [];
+      this.lastAudioBlob = null;
+      
+      if (this.storyAudio) {
+        this.storyAudio.pause();
+        this.storyAudio = null;
+      }
+      if (this.audioUrl) {
+        URL.revokeObjectURL(this.audioUrl);
+        this.audioUrl = null;
+      }
+    }
+  }
+
+  customElements.define('audio-recorder', AudioRecorder);
+</script>

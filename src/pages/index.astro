@@ -1,14 +1,108 @@
 ---
+import AudioRecorder from '../components/AudioRecorder.astro';
 ---
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05070d" />
     <meta name="generator" content={Astro.generator} />
-    <title>Bedtime App</title>
+    <title>Bedtime Story App</title>
   </head>
   <body>
-    Hello, bedtime app is working! 🚀
+    <main class="app-container">
+      <header class="header">
+        <h1>Tell me what tonight’s story is about</h1>
+        <p>Speak for 1 to 2 minutes — a character, a place, anything your child loves. I’ll turn it into a bedtime story.</p>
+      </header>
+
+      <section class="recorder-section">
+        <AudioRecorder />
+      </section>
+
+      <footer class="footer">
+        <p>Stories are AI-generated and read in an AI voice.</p>
+      </footer>
+    </main>
   </body>
 </html>
+
+<style>
+  :root {
+    color-scheme: dark;
+    /* Neo Shen Poetic Aesthetic: Deep atmospheric blues, warm grays, soft gold */
+    --bg-color-top: #0a1020;
+    --bg-color-bottom: #05070d;
+    --text-primary: #e6e2d8; /* Warm off-white, paper-like */
+    --text-secondary: #9c9990; /* Warm muted stone */
+    --accent-glow: rgba(223, 146, 83, 0.15); /* Soft gold/amber glow */
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at 50% 20%, var(--bg-color-top) 0%, var(--bg-color-bottom) 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 375px;
+    padding: 3rem 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 4rem;
+    margin-top: 2rem;
+  }
+
+  .header h1 {
+    /* Adding a refined serif touch to elevate the poetic story aspect */
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 1.85rem;
+    line-height: 1.35;
+    font-weight: 400;
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.01em;
+    color: var(--text-primary);
+    text-wrap: pretty;
+  }
+
+  .header p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .recorder-section {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-bottom: 1rem;
+  }
+
+  .footer p {
+    font-size: 0.75rem;
+    color: rgba(156, 153, 144, 0.5); /* Dim muted text */
+    margin: 0;
+  }
+</style>
