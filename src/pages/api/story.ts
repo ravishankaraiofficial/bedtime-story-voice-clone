@@ -21,6 +21,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // 2. Parse FormData to get audio file
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File | null;
+    const languageName = (formData.get('languageName') as string) || 'English';
     
     if (!audioFile) {
       return new Response(
@@ -47,7 +48,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const base64Data = btoa(binary);
     const mimeType = audioFile.type || 'audio/webm';
 
-    const systemPrompt = "You are a gentle bedtime storyteller for a child aged 4 to 6. Listen to the parent's recording and use the characters, places, names, and details they mention. Write a calm, slow-paced, soothing original bedtime story that takes about 4 minutes to read aloud (roughly 500 to 600 words). Use soft, simple language. No scary parts, no conflict, no loud action. The story should gradually slow down and end with the main character feeling sleepy and drifting peacefully to sleep. Respond with ONLY the story text — no title, no preamble, no notes.";
+    const systemPrompt = `You are a gentle bedtime storyteller for a child aged 4 to 6. Listen to the parent's recording and use the characters, places, names, and details they mention. Write a calm, slow-paced, soothing original bedtime story that takes about 4 minutes to read aloud (roughly 500 to 600 words). Use soft, simple language. No scary parts, no conflict, no loud action. The story should gradually slow down and end with the main character feeling sleepy and drifting peacefully to sleep. Respond with ONLY the story text — no title, no preamble, no notes.
+    
+IMPORTANT: Respond ENTIRELY in the following language: ${languageName}. The story must be written natively and naturally in that language.`;
 
     // 5. Setup 30-second timeout
     const controller = new AbortController();

@@ -64,7 +64,6 @@
     cursor: pointer;
     touch-action: manipulation;
     outline: none;
-    /* Soft diffused light effect */
     box-shadow: 0 0 40px rgba(223, 146, 83, 0.08), inset 0 0 0 1px rgba(223, 146, 83, 0.2);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, box-shadow 0.4s ease;
   }
@@ -90,12 +89,8 @@
   }
   
   @media (prefers-reduced-motion: reduce) {
-    .record-button {
-      transition: none;
-    }
-    .record-button:hover, .record-button:active, .record-button.is-recording {
-      transform: none;
-    }
+    .record-button { transition: none; }
+    .record-button:hover, .record-button:active, .record-button.is-recording { transform: none; }
   }
 
   .status-text {
@@ -107,14 +102,13 @@
   }
 
   .error-text {
-    color: #cf6679; /* Soft muted red for errors */
+    color: #cf6679;
     font-size: 0.85rem;
     text-align: center;
     max-width: 300px;
     line-height: 1.5;
   }
 
-  /* --- Neo Shen Story Container Styles --- */
   .story-container {
     display: flex;
     flex-direction: column;
@@ -129,16 +123,16 @@
   }
 
   .story-text {
-    font-family: "Georgia", "Times New Roman", serif;
-    font-size: 1.15rem; /* Min 18px */
-    line-height: 1.85; /* Comfortable line spacing */
+    font-size: 1.15rem;
+    line-height: 1.85;
     color: var(--text-primary);
     text-align: left;
     margin-bottom: 3rem;
     width: 100%;
   }
 
-  /* Make story paragraphs look like a real book */
+  html[data-lang="en"] .story-text { font-family: "Georgia", "Times New Roman", serif; }
+
   .story-text :global(p) {
     margin-bottom: 1.5em;
     text-wrap: pretty;
@@ -168,7 +162,7 @@
     height: 56px;
     border-radius: 50%;
     border: none;
-    background-color: #df9253; /* Warm gold */
+    background-color: #df9253;
     color: #05070d;
     display: flex;
     align-items: center;
@@ -202,17 +196,8 @@
     outline: none;
   }
 
-  .loop-btn:hover {
-    color: #df9253;
-  }
-  
-  .loop-btn.active {
-    color: #df9253;
-  }
-
-  .loop-btn:focus-visible {
-    box-shadow: 0 0 0 2px #df9253;
-  }
+  .loop-btn:hover, .loop-btn.active { color: #df9253; }
+  .loop-btn:focus-visible { box-shadow: 0 0 0 2px #df9253; }
 
   .tap-play-btn {
     background-color: transparent;
@@ -226,25 +211,17 @@
     transition: all 0.3s ease;
   }
 
-  .tap-play-btn:hover {
-    background-color: rgba(223, 146, 83, 0.1);
-  }
+  .tap-play-btn:hover { background-color: rgba(223, 146, 83, 0.1); }
 
   @media (prefers-reduced-motion: reduce) {
-    .story-container {
-      animation: none;
-    }
-    .control-btn {
-      transition: none;
-    }
-    .control-btn:hover {
-      transform: none;
-    }
+    .story-container { animation: none; }
+    .control-btn { transition: none; }
+    .control-btn:hover { transform: none; }
   }
 
   .reset-button {
     background-color: transparent;
-    color: #df9253; /* Warm gold */
+    color: #df9253;
     border: 1px solid rgba(223, 146, 83, 0.3);
     padding: 0.8rem 1.5rem;
     border-radius: 2rem;
@@ -266,6 +243,8 @@
 </style>
 
 <script>
+  import { languages } from '../i18n';
+
   class AudioRecorder extends HTMLElement {
     constructor() {
       super();
@@ -292,12 +271,15 @@
       this.isRecording = false;
       this.timerInterval = null;
       this.secondsElapsed = 0;
-      this.maxSeconds = 120; // 2 minutes max
+      this.maxSeconds = 120;
       this.stream = null;
-      this.lastAudioBlob = null; // Store for retries
+      this.lastAudioBlob = null;
       this.storyAudio = null;
       this.audioUrl = null;
       
+      this.currentLangCode = 'en';
+      this.dict = window.i18n ? window.i18n['en'] : {};
+
       this.btn.addEventListener('click', () => this.toggleRecording());
       this.resetBtn.addEventListener('click', () => this.resetUI());
       this.retryBtn.addEventListener('click', () => this.submitAudio(this.lastAudioBlob));
@@ -308,6 +290,42 @@
         this.playbackControls.style.display = 'flex';
         this.storyAudio.play();
       });
+
+      // Listen for language changes from index.astro
+      window.addEventListener('languagechange', (e) => {
+        this.currentLangCode = e.detail.code;
+        this.dict = e.detail.dict;
+        this.updateTranslations();
+      });
+
+      // Initial translation check
+      setTimeout(() => {
+        const initialLang = document.documentElement.dataset.lang || 'en';
+        if (window.i18n && window.i18n[initialLang]) {
+          this.currentLangCode = initialLang;
+          this.dict = window.i18n[initialLang];
+          this.updateTranslations();
+        }
+      }, 0);
+    }
+
+    updateTranslations() {
+      // Update UI texts immediately based on state
+      if (this.isRecording) {
+        this.statusText.textContent = `${this.dict.status_recording} ${this.formatTime(this.secondsElapsed)}`;
+      } else if (this.recorderContainer.style.display !== 'none') {
+        this.statusText.textContent = this.dict.status_tap;
+      }
+
+      this.retryBtn.textContent = this.dict.btn_retry;
+      this.resetBtn.textContent = this.dict.btn_reset;
+      this.tapToPlayBtn.textContent = this.dict.btn_tap_to_play;
+
+      if (this.errorText.textContent) {
+        // We can't perfectly map the exact error state if it happened before lang switch,
+        // but we can set a generic failure for safety.
+        this.errorText.textContent = this.dict.error_generic;
+      }
     }
 
     formatTime(seconds) {
@@ -341,13 +359,13 @@
       try {
         this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (err) {
-        this.errorText.textContent = "Microphone access is needed. Please enable it in your browser settings and reload.";
+        this.errorText.textContent = this.dict.error_mic;
         return;
       }
 
       const mimeType = await this.getSupportedMimeType();
       if (!mimeType) {
-        this.errorText.textContent = "Your browser does not support audio recording.";
+        this.errorText.textContent = this.dict.error_browser;
         return;
       }
 
@@ -369,11 +387,11 @@
       this.btn.classList.add('is-recording');
       this.secondsElapsed = 0;
       
-      this.statusText.textContent = `Recording… 0:00`;
+      this.statusText.textContent = `${this.dict.status_recording} 0:00`;
       
       this.timerInterval = setInterval(() => {
         this.secondsElapsed++;
-        this.statusText.textContent = `Recording… ${this.formatTime(this.secondsElapsed)}`;
+        this.statusText.textContent = `${this.dict.status_recording} ${this.formatTime(this.secondsElapsed)}`;
         
         if (this.secondsElapsed >= this.maxSeconds) {
           this.stopRecording();
@@ -402,14 +420,19 @@
     async submitAudio(blob) {
       if (!blob) return;
       
-      this.statusText.textContent = 'Creating your story…';
+      this.statusText.textContent = this.dict.status_creating;
       this.errorText.textContent = '';
       this.retryBtn.style.display = 'none';
-      this.btn.style.pointerEvents = 'none'; // Disable record button while loading
+      this.btn.style.pointerEvents = 'none';
       this.btn.style.opacity = '0.5';
       
       const formData = new FormData();
       formData.append('audio', blob, 'story.webm');
+      
+      // Get the full name of the language to prompt Gemini clearly
+      const langObj = languages.find(l => l.code === this.currentLangCode) || languages[0];
+      formData.append('languageCode', langObj.code);
+      formData.append('languageName', langObj.name);
 
       try {
         const response = await fetch('/api/story', {
@@ -426,8 +449,8 @@
         this.showStory(data.story);
       } catch (err) {
         console.error("Error posting to /api/story:", err);
-        this.statusText.textContent = 'Failed';
-        this.errorText.textContent = "Something went wrong creating the story. Please try again.";
+        this.statusText.textContent = this.dict.status_failed;
+        this.errorText.textContent = this.dict.error_generic;
         this.retryBtn.style.display = 'inline-block';
       } finally {
         this.btn.style.pointerEvents = 'auto';
@@ -439,19 +462,16 @@
       this.recorderContainer.style.display = 'none';
       this.storyContainer.style.display = 'flex';
       
-      // Parse story text into paragraphs
       const paragraphs = storyText.split('\n').filter(p => p.trim() !== '');
       this.storyText.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
       
       this.storyText.setAttribute('aria-live', 'polite');
-      
-      // Automatically fetch TTS
       this.fetchVoice(storyText);
     }
 
     async fetchVoice(text) {
       this.ttsStatus.style.display = 'block';
-      this.ttsStatus.textContent = 'Preparing the voice…';
+      this.ttsStatus.textContent = this.dict.tts_preparing;
       this.playbackControls.style.display = 'none';
       this.tapToPlayBtn.style.display = 'none';
       
@@ -489,17 +509,15 @@
         
         this.ttsStatus.style.display = 'none';
         
-        // Attempt autoplay
         try {
           await this.storyAudio.play();
           this.playbackControls.style.display = 'flex';
         } catch (err) {
-          // Autoplay blocked
           this.tapToPlayBtn.style.display = 'inline-block';
         }
       } catch (err) {
         console.error("Error fetching TTS:", err);
-        this.ttsStatus.textContent = 'Voice is unavailable right now — you can read the story aloud yourself.';
+        this.ttsStatus.textContent = this.dict.tts_failed;
       }
     }
 
@@ -525,7 +543,7 @@
     resetUI() {
       this.storyContainer.style.display = 'none';
       this.recorderContainer.style.display = 'flex';
-      this.statusText.textContent = 'Tap to record';
+      this.statusText.textContent = this.dict.status_tap;
       this.errorText.textContent = '';
       this.retryBtn.style.display = 'none';
       this.storyText.innerHTML = '';

@@ -1,5 +1,6 @@
 ---
 import AudioRecorder from '../components/AudioRecorder.astro';
+import { languages, i18n } from '../i18n';
 ---
 <html lang="en">
   <head>
@@ -9,12 +10,34 @@ import AudioRecorder from '../components/AudioRecorder.astro';
     <meta name="theme-color" content="#05070d" />
     <meta name="generator" content={Astro.generator} />
     <title>Bedtime Story App</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Noto+Sans+Bengali&family=Noto+Sans+Devanagari&family=Noto+Sans+Gujarati&family=Noto+Sans+Gurmukhi&family=Noto+Sans+Kannada&family=Noto+Sans+Malayalam&family=Noto+Sans+Oriya&family=Noto+Sans+Tamil&family=Noto+Sans+Telugu&display=swap" rel="stylesheet">
+    
+    <script define:vars={{ i18n }}>
+      window.i18n = i18n;
+      // Pre-apply language layout to prevent FOUC
+      const savedLang = localStorage.getItem('bedtime_lang') || 'en';
+      if (savedLang === 'ur') {
+        document.documentElement.dir = 'rtl';
+      }
+      document.documentElement.dataset.lang = savedLang;
+    </script>
   </head>
   <body>
+    <nav class="lang-bar">
+      {languages.map(lang => (
+        <button class="lang-btn" data-code={lang.code} aria-label={`Switch to ${lang.name}`}>
+          {lang.native}
+        </button>
+      ))}
+    </nav>
+
     <main class="app-container">
       <header class="header">
-        <h1>Tell me what tonight’s story is about</h1>
-        <p>Speak for 1 to 2 minutes — a character, a place, anything your child loves. I’ll turn it into a bedtime story.</p>
+        <h1 id="uiTitle">Tell me what tonight’s story is about</h1>
+        <p id="uiSubtitle">Speak for 1 to 2 minutes — a character, a place, anything your child loves. I’ll turn it into a bedtime story.</p>
       </header>
 
       <section class="recorder-section">
@@ -22,22 +45,91 @@ import AudioRecorder from '../components/AudioRecorder.astro';
       </section>
 
       <footer class="footer">
-        <p>Stories are AI-generated and read in an AI voice.</p>
+        <p id="uiFooter">Stories are AI-generated and read in an AI voice.</p>
       </footer>
     </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <script>
+      import { languages } from '../i18n';
+
+      const langBtns = document.querySelectorAll('.lang-btn');
+      const title = document.getElementById('uiTitle');
+      const subtitle = document.getElementById('uiSubtitle');
+      const footer = document.getElementById('uiFooter');
+      const toast = document.getElementById('toast');
+      let toastTimeout;
+
+      function updateLanguage(code, showToast = true) {
+        localStorage.setItem('bedtime_lang', code);
+        document.documentElement.dataset.lang = code;
+        document.documentElement.dir = code === 'ur' ? 'rtl' : 'ltr';
+
+        langBtns.forEach(btn => {
+          if (btn.dataset.code === code) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        const dict = window.i18n[code] || window.i18n['en'];
+        
+        // Update DOM elements
+        if (title) title.textContent = dict.title;
+        if (subtitle) subtitle.textContent = dict.subtitle;
+        if (footer) footer.textContent = dict.footer;
+
+        // Dispatch event for AudioRecorder
+        window.dispatchEvent(new CustomEvent('languagechange', { detail: { code, dict } }));
+
+        if (showToast) {
+          toast.textContent = dict.toast_confirm;
+          toast.classList.add('show');
+          clearTimeout(toastTimeout);
+          toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+          }, 3000);
+        }
+      }
+
+      langBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateLanguage(btn.dataset.code);
+        });
+      });
+
+      // Init on load
+      const initLang = localStorage.getItem('bedtime_lang') || 'en';
+      updateLanguage(initLang, false);
+    </script>
   </body>
 </html>
 
 <style>
   :root {
     color-scheme: dark;
-    /* Neo Shen Poetic Aesthetic: Deep atmospheric blues, warm grays, soft gold */
     --bg-color-top: #0a1020;
     --bg-color-bottom: #05070d;
-    --text-primary: #e6e2d8; /* Warm off-white, paper-like */
-    --text-secondary: #9c9990; /* Warm muted stone */
-    --accent-glow: rgba(223, 146, 83, 0.15); /* Soft gold/amber glow */
+    --text-primary: #e6e2d8;
+    --text-secondary: #9c9990;
+    --accent-glow: rgba(223, 146, 83, 0.15);
   }
+
+  /* Font mapping via data-lang */
+  html[data-lang="hi"] body { font-family: "Noto Sans Devanagari", sans-serif; }
+  html[data-lang="mr"] body { font-family: "Noto Sans Devanagari", sans-serif; }
+  html[data-lang="bn"] body { font-family: "Noto Sans Bengali", sans-serif; }
+  html[data-lang="as"] body { font-family: "Noto Sans Bengali", sans-serif; }
+  html[data-lang="te"] body { font-family: "Noto Sans Telugu", sans-serif; }
+  html[data-lang="ta"] body { font-family: "Noto Sans Tamil", sans-serif; }
+  html[data-lang="gu"] body { font-family: "Noto Sans Gujarati", sans-serif; }
+  html[data-lang="ur"] body { font-family: "Noto Nastaliq Urdu", serif; }
+  html[data-lang="kn"] body { font-family: "Noto Sans Kannada", sans-serif; }
+  html[data-lang="or"] body { font-family: "Noto Sans Oriya", sans-serif; }
+  html[data-lang="ml"] body { font-family: "Noto Sans Malayalam", sans-serif; }
+  html[data-lang="pa"] body { font-family: "Noto Sans Gurmukhi", sans-serif; }
 
   body {
     margin: 0;
@@ -47,15 +139,58 @@ import AudioRecorder from '../components/AudioRecorder.astro';
     color: var(--text-primary);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
+  /* Language Bar */
+  .lang-bar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: transparent;
+  }
+
+  .lang-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s ease, font-weight 0.2s ease;
+    outline: none;
+  }
+
+  .lang-btn:hover, .lang-btn:focus-visible {
+    font-weight: bold;
+    color: var(--text-primary);
+  }
+
+  .lang-btn:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: #df9253;
+  }
+
+  .lang-btn.active {
+    font-weight: bold;
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: #df9253;
+  }
+
+  /* Main Container */
   .app-container {
     width: 100%;
     max-width: 375px;
-    padding: 3rem 1.5rem;
+    padding: 2rem 1.5rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -64,12 +199,9 @@ import AudioRecorder from '../components/AudioRecorder.astro';
   .header {
     text-align: center;
     margin-bottom: 4rem;
-    margin-top: 2rem;
   }
 
   .header h1 {
-    /* Adding a refined serif touch to elevate the poetic story aspect */
-    font-family: "Georgia", "Times New Roman", serif;
     font-size: 1.85rem;
     line-height: 1.35;
     font-weight: 400;
@@ -77,6 +209,10 @@ import AudioRecorder from '../components/AudioRecorder.astro';
     letter-spacing: 0.01em;
     color: var(--text-primary);
     text-wrap: pretty;
+  }
+
+  html[data-lang="en"] .header h1 {
+    font-family: "Georgia", "Times New Roman", serif;
   }
 
   .header p {
@@ -102,7 +238,31 @@ import AudioRecorder from '../components/AudioRecorder.astro';
 
   .footer p {
     font-size: 0.75rem;
-    color: rgba(156, 153, 144, 0.5); /* Dim muted text */
+    color: rgba(156, 153, 144, 0.5);
     margin: 0;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #111827;
+    color: var(--text-primary);
+    padding: 0.8rem 1.5rem;
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    border: 1px solid rgba(223, 146, 83, 0.2);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    z-index: 100;
+    text-align: center;
+  }
+
+  .toast.show {
+    opacity: 1;
   }
 </style>
