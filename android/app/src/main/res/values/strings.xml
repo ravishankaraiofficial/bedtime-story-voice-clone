@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bedtime Story App</string>
+    <string name="title_activity_main">Bedtime Story App</string>
+    <string name="package_name">com.bedtimestory.app</string>
+    <string name="custom_url_scheme">com.bedtimestory.app</string>
+</resources>

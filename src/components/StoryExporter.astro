@@ -1,0 +1,255 @@
+---
+---
+<story-exporter>
+  <div style="display: flex; gap: 1rem; align-items: center; justify-content: center;">
+    <button id="exportPdfBtn" class="export-button" aria-label="Export Weekly Storybook">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      Export Weekly Storybook (PDF)
+    </button>
+
+    <!-- Phase 5: E-commerce API -->
+    <button id="orderPrintBtn" class="export-button print-button" aria-label="Order Hardcover Book">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      Order Hardcover Book
+    </button>
+  </div>
+  <div id="exportStatus" class="export-status"></div>
+
+  <!-- Hidden container for rendering HTML to Canvas -->
+  <div id="pdfRenderContainer" class="pdf-render-container" style="position: absolute; left: -9999px; top: 0;"></div>
+</story-exporter>
+
+<style>
+  .export-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(223, 146, 83, 0.1);
+    color: #df9253;
+    border: 1px solid rgba(223, 146, 83, 0.3);
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 1.5rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  .export-button:hover {
+    background: rgba(223, 146, 83, 0.2);
+    transform: translateY(-2px);
+  }
+  .export-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .print-button {
+    background: rgba(146, 223, 83, 0.1);
+    color: #92df53;
+    border-color: rgba(146, 223, 83, 0.3);
+  }
+  .print-button:hover {
+    background: rgba(146, 223, 83, 0.2);
+  }
+  .export-status {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  /* PDF Render Styles (Neo Shen format applied explicitly for capture) */
+  :global(.pdf-page-wrapper) {
+    width: 800px;
+    min-height: 1131px; /* A4 Ratio at 96 DPI */
+    background-color: #05070d; /* Deep dark blue */
+    padding: 60px;
+    box-sizing: border-box;
+    color: #fff;
+    font-family: inherit;
+  }
+  
+  :global(.pdf-story-date) {
+    font-size: 1rem;
+    color: #df9253;
+    opacity: 0.8;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(223, 146, 83, 0.2);
+    padding-bottom: 1rem;
+  }
+
+  :global(.pdf-svg-container) {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+
+  :global(.pdf-svg-container svg) {
+    max-width: 400px;
+    height: auto;
+    stroke: #df9253;
+    fill: none;
+    /* We use drop-shadow in CSS, html2canvas supports basic drop-shadow but we might need to rely on the clean SVG lines */
+    filter: drop-shadow(0 0 10px rgba(223, 146, 83, 0.4));
+  }
+
+  :global(.pdf-story-content) {
+    font-size: 1.25rem;
+    line-height: 1.9;
+    color: #e5e3db;
+    text-shadow: 0 0 8px rgba(223, 146, 83, 0.3); /* Amber glowing text */
+    white-space: pre-wrap;
+  }
+</style>
+
+<script>
+  class StoryExporter extends HTMLElement {
+    constructor() {
+      super();
+      this.btn = this.querySelector('#exportPdfBtn');
+      this.printBtn = this.querySelector('#orderPrintBtn');
+      this.statusText = this.querySelector('#exportStatus');
+      this.renderContainer = this.querySelector('#pdfRenderContainer');
+
+      this.btn.addEventListener('click', () => this.generatePDF());
+      this.printBtn.addEventListener('click', () => this.orderPrintBook());
+    }
+
+    async orderPrintBook() {
+      this.printBtn.disabled = true;
+      this.statusText.textContent = "Packaging story history for print-on-demand fulfillment...";
+      
+      try {
+        const res = await fetch('/api/history?userId=demo-user-123');
+        const data = await res.json();
+        
+        if (!data.history || data.history.length === 0) {
+          this.statusText.textContent = "No stories found to print.";
+          this.printBtn.disabled = false;
+          return;
+        }
+
+        // Mock Webhook Payload for Gelato/Lulu
+        const payload = {
+          order_type: "hardcover_book",
+          pages: data.history.map(story => ({ text: story.story_text, image: story.svg_data })),
+          shipping_id: "user-address-123"
+        };
+        
+        console.log("[E-Commerce] Sending Print-on-Demand payload:", payload);
+        
+        // Mock network delay
+        await new Promise(r => setTimeout(r, 2000));
+        
+        this.statusText.textContent = "Order successfully sent to printer!";
+        setTimeout(() => this.statusText.textContent = "", 4000);
+      } catch (err) {
+        this.statusText.textContent = "Error placing order.";
+      } finally {
+        this.printBtn.disabled = false;
+      }
+    }
+
+    async generatePDF() {
+      this.btn.disabled = true;
+      this.statusText.textContent = "Fetching story history...";
+
+      try {
+        const res = await fetch('/api/history?userId=demo-user-123');
+        const data = await res.json();
+        
+        if (!data.history || data.history.length === 0) {
+          this.statusText.textContent = "No stories found to export.";
+          this.btn.disabled = false;
+          return;
+        }
+
+        this.statusText.textContent = `Formatting ${data.history.length} stories for export...`;
+        
+        // Phase 6: Dynamic Import
+        const [{ jsPDF }, html2canvasModule] = await Promise.all([
+          import('jspdf'),
+          import('html2canvas')
+        ]);
+        const html2canvas = html2canvasModule.default || html2canvasModule;
+
+        // Initialize A4 PDF
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [800, 1131]
+        });
+
+        for (let i = 0; i < data.history.length; i++) {
+          const storyData = data.history[i];
+          const dateStr = new Date(storyData.created_at).toLocaleDateString('en-US', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+          });
+
+          // Build HTML Structure
+          const pageWrapper = document.createElement('div');
+          pageWrapper.className = 'pdf-page-wrapper';
+          
+          const dateDiv = document.createElement('div');
+          dateDiv.className = 'pdf-story-date';
+          dateDiv.textContent = `Bedtime Story — ${dateStr}`;
+          pageWrapper.appendChild(dateDiv);
+
+          if (storyData.svg_data) {
+            const svgDiv = document.createElement('div');
+            svgDiv.className = 'pdf-svg-container';
+            svgDiv.innerHTML = storyData.svg_data;
+            pageWrapper.appendChild(svgDiv);
+          }
+
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'pdf-story-content';
+          contentDiv.textContent = storyData.story_text;
+          pageWrapper.appendChild(contentDiv);
+
+          this.renderContainer.innerHTML = '';
+          this.renderContainer.appendChild(pageWrapper);
+
+          // Render via html2canvas
+          this.statusText.textContent = `Rendering page ${i + 1} of ${data.history.length}...`;
+          
+          const canvas = await html2canvas(pageWrapper, {
+            scale: 2, // High resolution
+            useCORS: true,
+            backgroundColor: '#05070d'
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          
+          if (i > 0) doc.addPage();
+          doc.addImage(imgData, 'JPEG', 0, 0, 800, 1131);
+        }
+
+        this.statusText.textContent = "Downloading PDF...";
+        doc.save('Bedtime-Weekly-Storybook.pdf');
+        
+        this.statusText.textContent = "Export complete!";
+        setTimeout(() => this.statusText.textContent = "", 3000);
+
+      } catch (err) {
+        console.error(err);
+        this.statusText.textContent = "Error generating PDF.";
+      } finally {
+        this.btn.disabled = false;
+        this.renderContainer.innerHTML = ''; // Clean up
+      }
+    }
+  }
+
+  customElements.define('story-exporter', StoryExporter);
+</script>

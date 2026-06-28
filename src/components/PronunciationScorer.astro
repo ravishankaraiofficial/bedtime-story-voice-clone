@@ -1,0 +1,112 @@
+---
+// PronunciationScorer.astro - Phase 7 Gamification Module
+---
+<pronunciation-scorer>
+  <div class="scorer-container">
+    <h3 class="scorer-title">Time to Practice!</h3>
+    <p class="scorer-desc">Say the magic word out loud to unlock a badge.</p>
+    
+    <div class="word-display" id="targetWord">सो जाओ (So Jao)</div>
+    
+    <button id="recordBtn" class="record-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+      Tap & Speak
+    </button>
+    <div id="scoreFeedback" class="score-feedback"></div>
+  </div>
+</pronunciation-scorer>
+
+<style>
+  .scorer-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(223, 146, 83, 0.2);
+    text-align: center;
+  }
+  .scorer-title {
+    color: #df9253;
+    margin: 0 0 0.5rem 0;
+  }
+  .scorer-desc {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 1.5rem;
+  }
+  .word-display {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #e5e3db;
+    margin-bottom: 1.5rem;
+  }
+  .record-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #df9253;
+    color: #05070d;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .score-feedback {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #92df53;
+    min-height: 24px;
+  }
+</style>
+
+<script>
+  class PronunciationScorer extends HTMLElement {
+    constructor() {
+      super();
+      this.btn = this.querySelector('#recordBtn');
+      this.feedback = this.querySelector('#scoreFeedback');
+      this.targetWord = "सो जाओ";
+
+      this.btn.addEventListener('click', () => this.startListening());
+    }
+
+    startListening() {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.feedback.textContent = "Speech recognition not supported on this device.";
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'hi-IN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      this.feedback.textContent = "Listening...";
+      this.btn.style.opacity = '0.5';
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        console.log("[Pronunciation] Captured:", transcript);
+        
+        // Lightweight matching
+        if (transcript.includes("सो जाओ") || transcript.includes("so jao")) {
+          this.feedback.textContent = "✨ Perfect Pronunciation! +1 Badge ✨";
+          this.feedback.style.color = "#92df53";
+        } else {
+          this.feedback.textContent = "Good try! Keep practicing.";
+          this.feedback.style.color = "#df9253";
+        }
+      };
+
+      recognition.onend = () => {
+        this.btn.style.opacity = '1';
+      };
+
+      recognition.start();
+    }
+  }
+  customElements.define('pronunciation-scorer', PronunciationScorer);
+</script>

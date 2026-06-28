@@ -1,0 +1,6 @@
+{
+  "appId": "com.bedtimestory.app",
+  "appName": "Bedtime Story App",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

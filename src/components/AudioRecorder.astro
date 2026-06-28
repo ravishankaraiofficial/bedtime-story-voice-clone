@@ -1,20 +1,100 @@
 ---
+import WebXR from './WebXR.astro';
+import { languages } from '../i18n';
 ---
 <audio-recorder>
   <!-- Recorder Screen -->
   <div class="recorder-container" id="recorderContainer">
-    <button aria-label="Record story ideas" class="record-button" id="recordBtn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mic-icon"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-    </button>
-    
-    <div id="statusText" class="status-text" aria-live="polite">
-      Tap to record
+    <div class="record-actions">
+      <div id="dynamicLangInfo" class="dynamic-lang-info" aria-live="polite">
+        <span id="lblDynamicPrefix">Speak in your native language — The story will be told in </span><strong id="selectedLangName">English</strong><span id="lblDynamicSuffix">. If you want the output in a different language, please change your selection from the top menu.</span>
+      </div>
+      
+      <button aria-label="Record story ideas" class="record-button" id="recordBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mic-icon"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+      </button>
+      
+      <div id="statusText" class="status-text" aria-live="polite">Tap to record</div>
+      <p class="record-description" id="lblRecordDesc">Record or speak here the topic of the story or character of the story you want to hear and get a full story on that after clicking on the mic or record logo.</p>
+      <div id="errorText" class="error-text"></div>
     </div>
-    <div id="errorText" class="error-text"></div>
-    <button id="retryBtn" class="reset-button" style="display: none; margin-top: 1rem;">Retry</button>
+
+    <div class="options-panel">
+      
+      <div class="advanced-options">
+        <div class="option-group">
+          <label id="lblHeritage">Heritage Language (Bilingual Blending)</label>
+          <select id="heritageLangSelect" class="form-input">
+            <option value="">None (English Only)</option>
+            {languages.map(lang => (
+              <option value={lang.name}>{lang.name === lang.native ? lang.name : `${lang.name} (${lang.native})`}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="option-group">
+          <label id="lblCoHeroes">Co-Heroes (Sibling Balancing - 50/50 Division)</label>
+          <input type="text" id="siblingNamesInput" class="form-input" placeholder="e.g., Mia, Leo (comma separated)">
+        </div>
+        
+        <!-- Phase 8: Parental Co-Authoring -->
+        <div class="option-group">
+          <label id="lblChallenge">Real-World Challenge (Moral Guardrail)</label>
+          <select id="realWorldChallenge" class="form-input">
+            <option value="">None</option>
+            <option value="sharing toys">Sharing Toys</option>
+            <option value="fear of the dark">Fear of the Dark</option>
+            <option value="moving to a new school">Moving to a New School</option>
+            <option value="sibling friction">Sibling Friction</option>
+            <option value="other">Others</option>
+          </select>
+          <input type="text" id="otherChallengeInput" class="form-input" style="display: none; margin-top: 0.5rem;" maxlength="100" placeholder="Type your challenge (max 100 chars)...">
+        </div>
+        
+        <div class="option-group">
+          <label id="lblWearable">Wearable Auto-Shutoff (BLE)</label>
+          <button id="blePairBtn" class="secondary-btn">Pair Heart Rate Monitor</button>
+          <label class="mock-toggle"><input type="checkbox" id="mockBleToggle"> Developer Mock Mode (Simulate Sleep Drop)</label>
+          <div id="bleStatus" class="status-small">Not connected</div>
+        </div>
+
+        <!-- Phase 5: IoT Configuration -->
+        <div class="option-group">
+          <label id="lblSmartHome">Smart Home Configuration (IoT Dimming)</label>
+          <input type="text" id="iotWebhookInput" class="form-input" placeholder="e.g., http://192.168.1.50/api/.../state">
+          <div class="status-small">Triggers at 80% sleep fade threshold</div>
+        </div>
+
+        <!-- Phase 8: Sensor & Screen Engineering -->
+        <div class="option-group">
+          <label id="lblScreenless">Screenless Mode (Zero Melatonin Suppression)</label>
+          <label class="mock-toggle"><input type="checkbox" id="screenlessToggle"> Pitch Black Audio Only</label>
+        </div>
+        <div class="option-group">
+          <label id="lblDarkRoom">Ambient Light Sensor / Dark Room Mode</label>
+          <label class="mock-toggle"><input type="checkbox" id="darkRoomToggle"> Force Copper UI</label>
+        </div>
+      </div>
+
+      <div class="theme-selection">
+        <h3 id="lblTheme">Tonight's Theme</h3>
+        <div class="theme-grid" id="themeGrid">
+          <label><input type="radio" name="moral" value="" checked> <span class="theme-label">None</span></label>
+          <label><input type="radio" name="moral" value="Kindness"> <span class="theme-label">Kindness</span></label>
+          <label><input type="radio" name="moral" value="Bravery"> <span class="theme-label">Bravery</span></label>
+          <label><input type="radio" name="moral" value="Sharing"> <span class="theme-label">Sharing</span></label>
+          <label><input type="radio" name="moral" value="Honesty"> <span class="theme-label">Honesty</span></label>
+          <label><input type="radio" name="moral" value="other"> <span class="theme-label">Others</span></label>
+        </div>
+        <input type="text" id="otherThemeInput" class="form-input" style="display: none; margin-bottom: 1rem;" maxlength="100" placeholder="Type your theme (max 100 chars)...">
+      </div>
+      <div class="multipart-toggle">
+        <label><input type="checkbox" id="multiPartToggle"> <span id="lblMultiPart">Multi-Part Adventure (Chapter mode)</span></label>
+      </div>
+    </div>
   </div>
 
-  <!-- Story Screen (Hidden by default) -->
+  <!-- Story Screen -->
   <div class="story-container" id="storyContainer" style="display: none;">
     <div id="ttsStatus" class="tts-status" aria-live="polite">Preparing the voice…</div>
     
@@ -23,14 +103,35 @@
         <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
       </button>
-      <button id="loopBtn" class="loop-btn" aria-label="Toggle Loop">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
-      </button>
     </div>
     
-    <button id="tapToPlayBtn" class="tap-play-btn" style="display: none;">Tap to play</button>
+    <div id="speechBranchStatus" class="speech-branch-status" style="display: none;">
+      Listening for child interventions...
+    </div>
 
+    <!-- WebXR AR Integration -->
+    <WebXR />
+
+    <div id="storySvgContainer" class="svg-container breath-indicator"></div>
     <div id="storyText" class="story-text" aria-live="polite"></div>
+    <div id="lullabyText" class="lullaby-text" aria-live="polite"></div>
+
+    <div id="epiloguePanel" class="epilogue-panel" style="display: none;">
+      <p>Talk to the Storyteller...</p>
+      <button id="epilogueBtn" class="epilogue-btn">Reply</button>
+    </div>
+
+    <!-- Phase 8: Morning Feedback UI -->
+    <div id="morningFeedback" class="morning-feedback" style="display: none;">
+      <h3>Good Morning!</h3>
+      <p>How quickly did they fall asleep last night?</p>
+      <div class="feedback-options">
+        <button data-val="1">Under 10m</button>
+        <button data-val="2">10-20m</button>
+        <button data-val="3">20m+</button>
+      </div>
+    </div>
+
     <button id="resetBtn" class="reset-button">Record a new story</button>
   </div>
 </audio-recorder>
@@ -40,7 +141,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     width: 100%;
   }
   
@@ -49,201 +149,458 @@
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
+    width: 100%;
   }
 
-  .record-button {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    border: none;
-    background-color: #111827; /* Very dark base */
-    color: #df9253; /* Soft warm gold */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    touch-action: manipulation;
-    outline: none;
-    box-shadow: 0 0 40px rgba(223, 146, 83, 0.08), inset 0 0 0 1px rgba(223, 146, 83, 0.2);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, box-shadow 0.4s ease;
-  }
-
-  .record-button:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 50px rgba(223, 146, 83, 0.15), inset 0 0 0 1px rgba(223, 146, 83, 0.3);
-  }
-
-  .record-button:active {
-    transform: scale(0.97);
-  }
-
-  .record-button:focus-visible {
-    box-shadow: 0 0 0 4px #05070d, 0 0 0 6px #df9253;
-  }
-
-  .record-button.is-recording {
-    background-color: #df9253;
-    color: #05070d;
-    transform: scale(1.08);
-    box-shadow: 0 0 60px rgba(223, 146, 83, 0.25);
-  }
-  
-  @media (prefers-reduced-motion: reduce) {
-    .record-button { transition: none; }
-    .record-button:hover, .record-button:active, .record-button.is-recording { transform: none; }
-  }
-
-  .status-text {
-    font-size: 1.05rem;
-    color: #9c9990;
-    font-variant-numeric: tabular-nums;
-    min-height: 1.5rem;
-    letter-spacing: 0.02em;
-  }
-
-  .error-text {
-    color: #cf6679;
-    font-size: 0.85rem;
-    text-align: center;
-    max-width: 300px;
-    line-height: 1.5;
-  }
-
-  .story-container {
+  .record-actions {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    animation: fadeIn 0.8s ease forwards;
+    margin-bottom: 0.5rem;
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  .dynamic-lang-info {
+    font-size: 0.95rem;
+    color: var(--accent-color);
+    background: rgba(223, 146, 83, 0.1);
+    border: 1px solid rgba(223, 146, 83, 0.3);
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    text-align: center;
+    max-width: 95%;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
   }
 
-  .story-text {
-    font-size: 1.15rem;
-    line-height: 1.85;
+  .record-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 90%;
+    margin: 0.8rem auto 0;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  .options-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    width: 100%;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+  }
+
+  .advanced-options {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .option-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.6rem;
+    font-weight: 400;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
     color: var(--text-primary);
-    text-align: left;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(223, 146, 83, 0.2);
+  }
+  
+  select.form-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+  }
+
+  select.form-input option {
+    background-color: #161026;
+    color: var(--text-primary);
+  }
+
+  .secondary-btn {
+    background: rgba(223, 146, 83, 0.1);
+    color: var(--accent-color);
+    border: 1px solid rgba(223, 146, 83, 0.3);
+    padding: 0.8rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    font-weight: 500;
+  }
+  
+  .secondary-btn:hover {
+    background: rgba(223, 146, 83, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .mock-toggle, .multipart-toggle label {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+
+  .mock-toggle input[type="checkbox"], .multipart-toggle input[type="checkbox"] {
+    appearance: none;
+    width: 44px;
+    height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+
+  .mock-toggle input[type="checkbox"]::after, .multipart-toggle input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .mock-toggle input[type="checkbox"]:checked, .multipart-toggle input[type="checkbox"]:checked {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+
+  .mock-toggle input[type="checkbox"]:checked::after, .multipart-toggle input[type="checkbox"]:checked::after {
+    transform: translateX(20px);
+  }
+
+  .status-small {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.5rem;
+    opacity: 0.8;
+  }
+
+  .theme-selection h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .theme-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .theme-grid label {
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 0.8rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+  
+  .theme-grid label:hover {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .theme-grid input[type="radio"] {
+    display: none;
+  }
+
+  .theme-grid label:has(input[type="radio"]:checked) {
+    background: var(--accent-glow);
+    border-color: rgba(223, 146, 83, 0.5);
+    color: var(--accent-color);
+    font-weight: 500;
+  }
+
+  .multipart-toggle {
+    padding-top: 1.5rem;
+  }
+
+  /* SVG Styling */
+  .svg-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 2rem auto;
+  }
+  
+  .svg-container :global(svg) {
+    width: 100%;
+    height: auto;
+    stroke: var(--accent-color);
+    fill: none;
+    filter: drop-shadow(0 0 8px rgba(223, 146, 83, 0.3));
+  }
+
+  /* Synced Text Glow & Emotion Keyframes */
+  .story-text :global(span), .lullaby-text :global(span) {
+    transition: text-shadow 0.3s ease, color 0.3s ease;
+    display: inline-block;
+  }
+  .story-text :global(span.glowing), .lullaby-text :global(span.glowing) {
+    color: #fff;
+    text-shadow: 0 0 12px rgba(223, 146, 83, 0.8);
+  }
+
+  .story-text :global(span.emotion-floating) {
+    animation: floating 3s ease-in-out infinite;
+  }
+  .story-text :global(span.emotion-shaking) {
+    animation: shaking 0.5s ease-in-out infinite;
+  }
+  .story-text :global(span.emotion-bouncy) {
+    animation: bouncy 1s ease-in-out infinite;
+  }
+
+  @keyframes floating {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes shaking {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes bouncy {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* Phase 8: Pitch Black Screenless Mode */
+  :global(body.screenless-mode) {
+    background-color: #000000 !important;
+  }
+  :global(body.screenless-mode) .svg-container, 
+  :global(body.screenless-mode) .story-text, 
+  :global(body.screenless-mode) .lullaby-text,
+  :global(body.screenless-mode) WebXR {
+    display: none !important;
+  }
+  
+  /* Phase 8: Dark Room Copper Theme */
+  :global(body.dark-room-mode) .story-text,
+  :global(body.dark-room-mode) .lullaby-text {
+    color: #b87333 !important;
+  }
+  :global(body.dark-room-mode) .story-text :global(span.glowing),
+  :global(body.dark-room-mode) .lullaby-text :global(span.glowing) {
+    color: #e59c5d !important;
+    text-shadow: none !important;
+  }
+  :global(body.dark-room-mode) .svg-container :global(svg) {
+    stroke: #b87333 !important;
+    filter: none !important;
+  }
+
+  /* Phase 8: 4-7-8 Calm-Down Breath Indicator */
+  .breath-indicator :global(svg) {
+    animation: breathe 19s linear infinite; /* 4s inhale + 7s hold + 8s exhale */
+  }
+  @keyframes breathe {
+    0% { transform: scale(1); opacity: 0.5; }
+    21% { transform: scale(1.15); opacity: 1; } /* 4s mark */
+    58% { transform: scale(1.15); opacity: 1; } /* 11s mark */
+    100% { transform: scale(1); opacity: 0.5; } /* 19s mark */
+  }
+
+  .lullaby-text {
+    font-style: italic;
+    color: var(--accent-color);
+    text-align: center;
     margin-bottom: 3rem;
+    line-height: 2;
+    font-size: 1.05rem;
+  }
+
+  .speech-branch-status {
+    font-size: 0.8rem;
+    color: #cf6679;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+
+  .epilogue-panel {
+    margin: 2rem 0;
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(223, 146, 83, 0.05);
+    border: 1px dashed rgba(223, 146, 83, 0.3);
+    border-radius: 12px;
     width: 100%;
   }
 
-  html[data-lang="en"] .story-text { font-family: "Georgia", "Times New Roman", serif; }
-
-  .story-text :global(p) {
-    margin-bottom: 1.5em;
-    text-wrap: pretty;
-  }
-
-  .tts-status {
-    font-size: 0.95rem;
-    color: #9c9990;
-    margin-bottom: 1.5rem;
-    font-style: italic;
-    min-height: 1.5rem;
-  }
-
-  .playback-controls {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding: 0.5rem 1.5rem;
-    background-color: rgba(255, 255, 255, 0.03);
-    border-radius: 3rem;
-    border: 1px solid rgba(223, 146, 83, 0.1);
-  }
-
-  .control-btn {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    border: none;
-    background-color: #df9253;
+  .epilogue-btn {
+    background: var(--accent-color);
     color: #05070d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-weight: bold;
     cursor: pointer;
-    outline: none;
-    box-shadow: 0 0 20px rgba(223, 146, 83, 0.2);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
+  /* Phase 8: Morning Feedback UI */
+  .morning-feedback {
+    margin: 2rem 0;
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(146, 223, 83, 0.05);
+    border: 1px solid rgba(146, 223, 83, 0.3);
+    border-radius: 12px;
+    width: 100%;
+  }
+  .morning-feedback h3 { color: #92df53; margin: 0 0 0.5rem 0; }
+  .feedback-options {
+    display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem;
+  }
+  .feedback-options button {
+    background: rgba(255,255,255,0.1); border: 1px solid #92df53; color: #fff;
+    padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;
+  }
+  .feedback-options button:hover { background: #92df53; color: #000; }
+
+  .record-button {
+    width: 96px; height: 96px; border-radius: 50%;
+    border: none; 
+    background: linear-gradient(135deg, #f2ad73, #df9253);
+    color: #111827;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(223, 146, 83, 0.4), inset 0 2px 0 rgba(255,255,255,0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin: 1.5rem 0;
+  }
+  .record-button svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    width: 36px;
+    height: 36px;
+    transition: transform 0.3s ease;
+  }
+  
+  .record-button:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 15px 40px rgba(223, 146, 83, 0.5), inset 0 2px 0 rgba(255,255,255,0.4);
+  }
+  
+  .record-button.is-recording {
+    background: linear-gradient(135deg, #ff6b6b, #c92a2a);
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 50px rgba(255, 107, 107, 0.6), inset 0 2px 0 rgba(255,255,255,0.2);
+    animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+    70% { box-shadow: 0 0 0 25px rgba(255, 107, 107, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+  }
+
+  .status-text { 
+    color: var(--text-secondary); 
+    font-size: 1.15rem;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .error-text { color: #cf6679; margin-top: 0.5rem; }
+  
+  .story-container { display: flex; flex-direction: column; align-items: center; width: 100%; user-select: none; }
+  .story-text { font-size: 1.15rem; line-height: 1.85; margin-bottom: 1.5rem; width: 100%; }
+  .tts-status { color: var(--text-secondary); margin-bottom: 1.5rem; font-style: italic; }
+  
+  .playback-controls {
+    display: flex; gap: 1.5rem; margin-bottom: 2rem; padding: 0.5rem 1.5rem;
+    background: var(--glass-bg); backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border); border-radius: 3rem;
+  }
+  .control-btn {
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background-color: var(--accent-color); color: #05070d; display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(223, 146, 83, 0.3);
+    transition: transform 0.2s ease;
+  }
   .control-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(223, 146, 83, 0.3);
   }
-
-  .control-btn:focus-visible {
-    box-shadow: 0 0 0 3px #05070d, 0 0 0 5px #df9253;
-  }
-
-  .loop-btn {
-    background: transparent;
-    border: none;
-    color: #9c9990;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.3s ease;
-    outline: none;
-  }
-
-  .loop-btn:hover, .loop-btn.active { color: #df9253; }
-  .loop-btn:focus-visible { box-shadow: 0 0 0 2px #df9253; }
-
-  .tap-play-btn {
-    background-color: transparent;
-    color: #df9253;
-    border: 1px solid #df9253;
-    padding: 1rem 2rem;
-    border-radius: 2rem;
-    font-size: 1.1rem;
-    cursor: pointer;
-    margin-bottom: 2rem;
-    transition: all 0.3s ease;
-  }
-
-  .tap-play-btn:hover { background-color: rgba(223, 146, 83, 0.1); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .story-container { animation: none; }
-    .control-btn { transition: none; }
-    .control-btn:hover { transform: none; }
-  }
-
   .reset-button {
-    background-color: transparent;
-    color: #df9253;
-    border: 1px solid rgba(223, 146, 83, 0.3);
-    padding: 0.8rem 1.5rem;
-    border-radius: 2rem;
-    font-size: 0.95rem;
-    cursor: pointer;
+    background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border);
+    padding: 0.8rem 1.5rem; border-radius: 2rem; cursor: pointer;
     transition: all 0.3s ease;
-    outline: none;
-    font-family: system-ui, sans-serif;
   }
-
   .reset-button:hover {
-    background-color: rgba(223, 146, 83, 0.1);
-    border-color: rgba(223, 146, 83, 0.6);
-  }
-
-  .reset-button:focus-visible {
-    box-shadow: 0 0 0 2px #05070d, 0 0 0 4px #df9253;
+    background: rgba(255,255,255,0.08);
   }
 </style>
 
 <script>
   import { languages } from '../i18n';
+
+  class CoPilotManager {
+    constructor() {
+      this.ws = null;
+      this.roomId = 'demo-room-123';
+    }
+    syncProgress(wordIndex) {}
+    syncState(state) {}
+  }
+  const coPilot = new CoPilotManager();
 
   class AudioRecorder extends HTMLElement {
     constructor() {
@@ -251,313 +608,731 @@
       this.btn = this.querySelector('#recordBtn');
       this.statusText = this.querySelector('#statusText');
       this.errorText = this.querySelector('#errorText');
-      
       this.recorderContainer = this.querySelector('#recorderContainer');
       this.storyContainer = this.querySelector('#storyContainer');
       this.storyText = this.querySelector('#storyText');
+      this.lullabyText = this.querySelector('#lullabyText');
+      this.storySvgContainer = this.querySelector('#storySvgContainer');
       this.resetBtn = this.querySelector('#resetBtn');
-      this.retryBtn = this.querySelector('#retryBtn');
+      this.selectedLangName = this.querySelector('#selectedLangName');
+      this.lblDynamicPrefix = this.querySelector('#lblDynamicPrefix');
+      this.lblDynamicSuffix = this.querySelector('#lblDynamicSuffix');
       
-      this.ttsStatus = this.querySelector('#ttsStatus');
-      this.playbackControls = this.querySelector('#playbackControls');
       this.playPauseBtn = this.querySelector('#playPauseBtn');
+      this.blePairBtn = this.querySelector('#blePairBtn');
       this.playIcon = this.querySelector('#playIcon');
       this.pauseIcon = this.querySelector('#pauseIcon');
-      this.loopBtn = this.querySelector('#loopBtn');
-      this.tapToPlayBtn = this.querySelector('#tapToPlayBtn');
+      this.playbackControls = this.querySelector('#playbackControls');
+      this.ttsStatus = this.querySelector('#ttsStatus');
       
+      this.epiloguePanel = this.querySelector('#epiloguePanel');
+      this.epilogueBtn = this.querySelector('#epilogueBtn');
+
+      this.blePairBtn = this.querySelector('#blePairBtn');
+      this.bleStatus = this.querySelector('#bleStatus');
+      this.mockBleToggle = this.querySelector('#mockBleToggle');
+      this.speechBranchStatus = this.querySelector('#speechBranchStatus');
+      this.iotWebhookInput = this.querySelector('#iotWebhookInput');
+      
+      this.realWorldChallenge = this.querySelector('#realWorldChallenge');
+      this.otherChallengeInput = this.querySelector('#otherChallengeInput');
+      
+      this.themeGrid = this.querySelector('#themeGrid');
+      this.otherThemeInput = this.querySelector('#otherThemeInput');
+
+      if (this.themeGrid && this.otherThemeInput) {
+        this.themeGrid.addEventListener('change', (e) => {
+          if (e.target.value === 'other') {
+            this.otherThemeInput.style.display = 'block';
+          } else {
+            this.otherThemeInput.style.display = 'none';
+          }
+        });
+
+        this.otherThemeInput.addEventListener('blur', (e) => {
+          const val = e.target.value.trim();
+          if (val.length > 0 && val.length < 3) {
+            alert(window.i18n?.[this.currentLangCode]?.error_theme_invalid || "Please type a clear theme (at least 3 characters) that makes sense.");
+          }
+        });
+      }
+
+      if (this.realWorldChallenge && this.otherChallengeInput) {
+        this.realWorldChallenge.addEventListener('change', (e) => {
+          if (e.target.value === 'other') {
+            this.otherChallengeInput.style.display = 'block';
+          } else {
+            this.otherChallengeInput.style.display = 'none';
+          }
+        });
+
+        this.otherChallengeInput.addEventListener('blur', (e) => {
+          const val = e.target.value.trim();
+          if (val.length > 0 && val.length < 3) {
+            alert(window.i18n?.[this.currentLangCode]?.error_challenge_invalid || "Please type a clear challenge (at least 3 characters) that makes sense.");
+          }
+        });
+      }
+      
+      this.screenlessToggle = this.querySelector('#screenlessToggle');
+      this.darkRoomToggle = this.querySelector('#darkRoomToggle');
+
       this.mediaRecorder = null;
       this.audioChunks = [];
       this.isRecording = false;
       this.timerInterval = null;
       this.secondsElapsed = 0;
-      this.maxSeconds = 120;
-      this.stream = null;
-      this.lastAudioBlob = null;
-      this.storyAudio = null;
-      this.audioUrl = null;
       
       this.currentLangCode = 'en';
-      this.dict = window.i18n ? window.i18n['en'] : {};
+      
+      this.audioContext = null;
+      this.masterGain = null;
+      this.ttsSource = null;
+      this.ambientSource = null;
+      this.pannerNode = null;
+      this.wakeLock = null;
+      this.wordInterval = null;
+      this.isPlaying = false;
+      this.iotTriggered = false;
+      
+      this.bluetoothDevice = null;
+      this.mockBleInterval = null;
+      this.speechRecognition = null;
+
+      // Phase 5: Haptics & Emotions
+      this.hapticsData = [];
+      this.emotionData = [];
+      this.hapticsInterval = null;
+
+      // Phase 5: Tap-to-Choose
+      this.tapCount = 0;
+      this.tapTimeout = null;
+
+      // Phase 9: Audio processing & Haptics
+      this.micStream = null;
+      this.micWorklet = null;
+      this.vocalVelocity = 'normal';
+      this.silenceCounter = 0;
+      this.hapticChannel = new BroadcastChannel('bedtime_haptics');
+      this.hapticChannel.onmessage = (e) => {
+        if ('vibrate' in navigator) navigator.vibrate(e.data.pattern);
+      };
 
       this.btn.addEventListener('click', () => this.toggleRecording());
-      this.resetBtn.addEventListener('click', () => this.resetUI());
-      this.retryBtn.addEventListener('click', () => this.submitAudio(this.lastAudioBlob));
+      this.resetBtn.addEventListener('click', () => location.reload());
       this.playPauseBtn.addEventListener('click', () => this.togglePlayback());
-      this.loopBtn.addEventListener('click', () => this.toggleLoop());
-      this.tapToPlayBtn.addEventListener('click', () => {
-        this.tapToPlayBtn.style.display = 'none';
-        this.playbackControls.style.display = 'flex';
-        this.storyAudio.play();
+      this.epilogueBtn.addEventListener('click', () => this.handleEpilogue());
+      this.blePairBtn.addEventListener('click', () => this.connectBLEHeartMonitor());
+      
+      this.mockBleToggle.addEventListener('change', (e) => {
+        if (e.target.checked) this.startMockBLE();
+        else this.stopMockBLE();
       });
-
-      // Listen for language changes from index.astro
+      
       window.addEventListener('languagechange', (e) => {
-        this.currentLangCode = e.detail.code;
-        this.dict = e.detail.dict;
-        this.updateTranslations();
+        this.currentLangCode = (e as any).detail.code;
+        const dict = (e as any).detail.dict;
+        
+        if (this.selectedLangName) {
+          const langInfo = languages.find(l => l.code === this.currentLangCode);
+          if (langInfo) this.selectedLangName.textContent = langInfo.name;
+        }
+
+        if (!dict) return;
+
+        if (this.lblDynamicPrefix) this.lblDynamicPrefix.textContent = dict.dynamic_prefix || "Speak in your native language — The story will be told in ";
+        if (this.lblDynamicSuffix) this.lblDynamicSuffix.textContent = dict.dynamic_suffix || ". If you want the output in a different language, please change your selection from the top menu.";
+
+        if (this.realWorldChallenge) {
+          const opts = this.realWorldChallenge.options;
+          for (let i = 0; i < opts.length; i++) {
+            const val = opts[i].value;
+            if (val === '') opts[i].text = dict.challenge_none || 'None';
+            else if (val === 'sharing toys') opts[i].text = dict.challenge_sharing || 'Sharing Toys';
+            else if (val === 'fear of the dark') opts[i].text = dict.challenge_fear || 'Fear of the Dark';
+            else if (val === 'moving to a new school') opts[i].text = dict.challenge_moving || 'Moving to a New School';
+            else if (val === 'sibling friction') opts[i].text = dict.challenge_sibling || 'Sibling Friction';
+            else if (val === 'other') opts[i].text = dict.challenge_other || 'Others';
+          }
+        }
+        
+        if (this.otherChallengeInput) {
+          this.otherChallengeInput.placeholder = dict.challenge_other_placeholder || 'Type your challenge (max 100 chars)...';
+        }
+        
+        if (this.themeGrid) {
+          const labels = this.themeGrid.querySelectorAll('.theme-label');
+          const radios = this.themeGrid.querySelectorAll('input[type="radio"]');
+          radios.forEach((radio, index) => {
+            const val = radio.value;
+            if (val === '') labels[index].textContent = dict.theme_none || 'None';
+            else if (val === 'Kindness') labels[index].textContent = dict.theme_kindness || 'Kindness';
+            else if (val === 'Bravery') labels[index].textContent = dict.theme_bravery || 'Bravery';
+            else if (val === 'Sharing') labels[index].textContent = dict.theme_sharing || 'Sharing';
+            else if (val === 'Honesty') labels[index].textContent = dict.theme_honesty || 'Honesty';
+            else if (val === 'other') labels[index].textContent = dict.theme_other || 'Others';
+          });
+        }
+        
+        if (this.otherThemeInput) {
+          this.otherThemeInput.placeholder = dict.theme_other_placeholder || 'Type your theme (max 100 chars)...';
+        }
       });
 
-      // Initial translation check
+      this.screenlessToggle?.addEventListener('change', (e) => {
+        if ((e.target as HTMLInputElement).checked) document.body.classList.add('screenless-mode');
+        else document.body.classList.remove('screenless-mode');
+      });
+
+      this.darkRoomToggle?.addEventListener('change', (e) => {
+        if ((e.target as HTMLInputElement).checked) document.body.classList.add('dark-room-mode');
+        else document.body.classList.remove('dark-room-mode');
+      });
+
+      this.initAmbientLightSensor();
+      this.initSpeechRecognition();
+      this.initTapBranching();
+    }
+
+    initAmbientLightSensor() {
+      try {
+        if ('AmbientLightSensor' in window) {
+          const sensor = new (window as any).AmbientLightSensor();
+          sensor.onreading = () => {
+            if (sensor.illuminance < 5) {
+              console.log("[Sensor] Lux < 5. Enabling Dark Room Mode.");
+              document.body.classList.add('dark-room-mode');
+              if (this.darkRoomToggle) (this.darkRoomToggle as HTMLInputElement).checked = true;
+            } else {
+              document.body.classList.remove('dark-room-mode');
+              if (this.darkRoomToggle) (this.darkRoomToggle as HTMLInputElement).checked = false;
+            }
+          };
+          sensor.onerror = (event: any) => console.log("[Sensor] ALS Error", event.error.name, event.error.message);
+          sensor.start();
+        }
+      } catch (e) {
+        console.warn("[Sensor] AmbientLightSensor not available or blocked. Fallback to manual toggle active.", e);
+      }
+    }
+
+    // --- Phase 5: Tap-to-Choose Branching ---
+    initTapBranching() {
+      this.storyContainer.addEventListener('touchstart', (e) => {
+        if (!this.isPlaying) return;
+        this.tapCount++;
+        clearTimeout(this.tapTimeout);
+        this.tapTimeout = setTimeout(() => {
+          if (this.tapCount > 0) {
+            console.log(`[Branching] Tap count registered: ${this.tapCount}`);
+            this.handleStoryBranching(`Child tapped ${this.tapCount} time(s)`);
+          }
+          this.tapCount = 0;
+        }, 400); // 400ms debounce for multi-taps
+      });
+    }
+
+    // --- Web Bluetooth API ---
+    async connectBLEHeartMonitor() {
+      try {
+        if (!navigator.bluetooth) throw new Error("Web Bluetooth not supported");
+        this.bluetoothDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }] });
+        const server = await this.bluetoothDevice.gatt.connect();
+        const service = await server.getPrimaryService('heart_rate');
+        const characteristic = await service.getCharacteristic('heart_rate_measurement');
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', (e) => this.handleHeartRate(e));
+        this.bleStatus.textContent = `Connected: ${this.bluetoothDevice.name}`;
+        this.blePairBtn.style.display = 'none';
+      } catch (error) {
+        this.bleStatus.textContent = `Error: ${error.message}`;
+      }
+    }
+
+    handleHeartRate(event) {
+      const currentHeartRate = event.target.value.getUint8(1); 
+      this.bleStatus.textContent = `HR: ${currentHeartRate} BPM`;
+      this.checkSleepState(currentHeartRate);
+    }
+
+    startMockBLE() {
+      this.blePairBtn.style.display = 'none';
+      let mockHR = 80;
+      this.bleStatus.textContent = `Mock HR: ${mockHR} BPM`;
+      this.mockBleInterval = setInterval(() => {
+        mockHR -= Math.floor(Math.random() * 3);
+        this.bleStatus.textContent = `Mock HR: ${mockHR} BPM`;
+        this.checkSleepState(mockHR);
+        if (mockHR <= 50) this.stopMockBLE();
+      }, 2000);
+    }
+    stopMockBLE() { clearInterval(this.mockBleInterval); }
+
+    checkSleepState(hr) {
+      if (hr < 60 && this.audioContext && this.audioContext.state === 'running' && this.isPlaying) {
+        console.log("Sleep state detected (HR < 60). Initiating Web Audio Auto-Shutoff.");
+        this.bleStatus.textContent = "Sleeping (Shutting down audio...)";
+        if (this.masterGain) {
+          this.masterGain.gain.cancelScheduledValues(this.audioContext.currentTime);
+          this.masterGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 5);
+        }
+        setTimeout(() => {
+          this.audioContext.suspend();
+          this.isPlaying = false;
+          this.playIcon.style.display = 'block';
+          this.pauseIcon.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        this.speechRecognition = new SpeechRecognition();
+        this.speechRecognition.continuous = true;
+        this.speechRecognition.interimResults = false;
+        this.speechRecognition.onresult = (event) => {
+          const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+          if (transcript.length > 5 && this.isPlaying) {
+            console.log(`[Branching] Intercepted Child Voice: "${transcript}"`);
+            this.handleStoryBranching(transcript);
+          }
+        };
+      }
+    }
+
+    async handleStoryBranching(interruptionText) {
+      // Phase 7: CYOA Voice Branching
+      this.speechBranchStatus.textContent = `🎤 "Which way should we go?" (Heard: ${interruptionText})`;
+      this.speechBranchStatus.style.display = 'block';
+      this.togglePlayback(); // Pause current TTS
+      
+      console.log(`[CYOA] Routing choice "${interruptionText}" to Gemini for dynamic next paragraph...`);
+      
+      // Mock network delay for Gemini response
       setTimeout(() => {
-        const initialLang = document.documentElement.dataset.lang || 'en';
-        if (window.i18n && window.i18n[initialLang]) {
-          this.currentLangCode = initialLang;
-          this.dict = window.i18n[initialLang];
-          this.updateTranslations();
-        }
-      }, 0);
-    }
+        this.speechBranchStatus.textContent = "Branch generated. Streaming new paragraph...";
+        
+        // Mock appending the new story text to the UI
+        const newParagraph = document.createElement('span');
+        newParagraph.className = "word-span glowing";
+        newParagraph.textContent = " And so, they chose a new path... ";
+        this.storyText.appendChild(newParagraph);
 
-    updateTranslations() {
-      // Update UI texts immediately based on state
-      if (this.isRecording) {
-        this.statusText.textContent = `${this.dict.status_recording} ${this.formatTime(this.secondsElapsed)}`;
-      } else if (this.recorderContainer.style.display !== 'none') {
-        this.statusText.textContent = this.dict.status_tap;
-      }
-
-      this.retryBtn.textContent = this.dict.btn_retry;
-      this.resetBtn.textContent = this.dict.btn_reset;
-      this.tapToPlayBtn.textContent = this.dict.btn_tap_to_play;
-
-      if (this.errorText.textContent) {
-        // We can't perfectly map the exact error state if it happened before lang switch,
-        // but we can set a generic failure for safety.
-        this.errorText.textContent = this.dict.error_generic;
-      }
-    }
-
-    formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
-
-    async getSupportedMimeType() {
-      const types = ['audio/webm', 'audio/mp4'];
-      for (const t of types) {
-        if (MediaRecorder.isTypeSupported(t)) {
-          return t;
-        }
-      }
-      return '';
+        setTimeout(() => {
+          this.speechBranchStatus.style.display = 'none';
+          this.togglePlayback(); // Resume playback
+        }, 2000);
+      }, 2500);
     }
 
     async toggleRecording() {
-      this.errorText.textContent = '';
-      this.retryBtn.style.display = 'none';
-      
       if (this.isRecording) {
-        this.stopRecording();
-      } else {
-        await this.startRecording();
-      }
-    }
-
-    async startRecording() {
-      try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (err) {
-        this.errorText.textContent = this.dict.error_mic;
-        return;
-      }
-
-      const mimeType = await this.getSupportedMimeType();
-      if (!mimeType) {
-        this.errorText.textContent = this.dict.error_browser;
-        return;
-      }
-
-      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
-      this.audioChunks = [];
-
-      this.mediaRecorder.addEventListener('dataavailable', event => {
-        if (event.data.size > 0) {
-          this.audioChunks.push(event.data);
-        }
-      });
-
-      this.mediaRecorder.addEventListener('stop', () => {
-        this.handleStop();
-      });
-
-      this.mediaRecorder.start();
-      this.isRecording = true;
-      this.btn.classList.add('is-recording');
-      this.secondsElapsed = 0;
-      
-      this.statusText.textContent = `${this.dict.status_recording} 0:00`;
-      
-      this.timerInterval = setInterval(() => {
-        this.secondsElapsed++;
-        this.statusText.textContent = `${this.dict.status_recording} ${this.formatTime(this.secondsElapsed)}`;
-        
-        if (this.secondsElapsed >= this.maxSeconds) {
-          this.stopRecording();
-        }
-      }, 1000);
-    }
-
-    stopRecording() {
-      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
         this.mediaRecorder.stop();
+        if (this.micStream) this.micStream.getTracks().forEach(t => t.stop());
+        this.btn.classList.remove('is-recording');
+        this.isRecording = false;
+        clearInterval(this.timerInterval);
+      } else {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.micStream = stream;
+        this.mediaRecorder = new MediaRecorder(stream);
+        this.audioChunks = [];
+        this.mediaRecorder.addEventListener('dataavailable', e => this.audioChunks.push(e.data));
+        this.mediaRecorder.addEventListener('stop', () => this.submitAudio());
+        this.mediaRecorder.start();
+        this.isRecording = true;
+        this.btn.classList.add('is-recording');
+        this.secondsElapsed = 0;
+
+        // Phase 9: Neuro-Linguistic Pacing Calibration
+        const recCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = recCtx.createMediaStreamSource(stream);
+        const analyser = recCtx.createAnalyser();
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        let loudSamples = 0;
+        let totalSamples = 0;
+
+        this.timerInterval = setInterval(() => {
+          this.secondsElapsed++;
+          this.statusText.textContent = `Recording... ${this.secondsElapsed}s`;
+          analyser.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((a,b) => a + b, 0) / dataArray.length;
+          if (avg > 30) loudSamples++;
+          totalSamples++;
+          this.vocalVelocity = (loudSamples / totalSamples > 0.6) ? 'high' : 'normal';
+        }, 1000);
       }
-      if (this.stream) {
-        this.stream.getTracks().forEach(track => track.stop());
-      }
-      clearInterval(this.timerInterval);
-      this.isRecording = false;
-      this.btn.classList.remove('is-recording');
     }
 
-    async handleStop() {
-      const blob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType });
-      this.lastAudioBlob = blob;
-      await this.submitAudio(blob);
-    }
-
-    async submitAudio(blob) {
-      if (!blob) return;
-      
-      this.statusText.textContent = this.dict.status_creating;
-      this.errorText.textContent = '';
-      this.retryBtn.style.display = 'none';
-      this.btn.style.pointerEvents = 'none';
+    async submitAudio() {
+      const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+      this.statusText.textContent = "Creating your story...";
       this.btn.style.opacity = '0.5';
       
       const formData = new FormData();
-      formData.append('audio', blob, 'story.webm');
-      
-      // Get the full name of the language to prompt Gemini clearly
+      formData.append('audio', blob);
       const langObj = languages.find(l => l.code === this.currentLangCode) || languages[0];
       formData.append('languageCode', langObj.code);
       formData.append('languageName', langObj.name);
+      
+      const theme = document.querySelector('input[name="moral"]:checked').value;
+      if (theme) formData.append('moralTheme', theme);
+      formData.append('isMultiPart', document.querySelector('#multiPartToggle').checked);
+      formData.append('heritageLanguage', document.querySelector('#heritageLangSelect').value);
+      formData.append('siblingNames', document.querySelector('#siblingNamesInput').value);
+      // Phase 8 & 9: Parental Co-authoring from LocalStorage/KV
+      const storedChallenge = localStorage.getItem('parent_challenge') || '';
+      const storedDialect = localStorage.getItem('heritage_dialect') || '';
+      
+      formData.append('realWorldChallenge', document.querySelector('#realWorldChallenge')?.value || storedChallenge);
+      formData.append('heritageDialect', storedDialect);
+      formData.append('userId', 'demo-user-123');
+      formData.append('vocalVelocity', this.vocalVelocity); // Phase 9
 
       try {
-        const response = await fetch('/api/story', {
-          method: 'POST',
-          body: formData
-        });
-        
+        const response = await fetch('/api/story', { method: 'POST', body: formData });
         const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
+        
+        this.recorderContainer.style.display = 'none';
+        this.storyContainer.style.display = 'flex';
+        
+        coPilot.syncState({ status: 'generating_audio' });
 
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to generate story");
+        if (data.svg) {
+          this.storySvgContainer.innerHTML = data.svg;
+          // Phase 5: Fire event for WebXR AR Portal
+          document.dispatchEvent(new CustomEvent('storyGenerated', { detail: { svg: data.svg } }));
         }
 
-        this.showStory(data.story);
-      } catch (err) {
-        console.error("Error posting to /api/story:", err);
-        this.statusText.textContent = this.dict.status_failed;
-        this.errorText.textContent = this.dict.error_generic;
-        this.retryBtn.style.display = 'inline-block';
-      } finally {
-        this.btn.style.pointerEvents = 'auto';
-        this.btn.style.opacity = '1';
-      }
-    }
+        this.hapticsData = data.haptics || [];
+        this.emotionData = data.emotions || []; // Array of { word_index: number, emotion: 'floating'|'shaking'|'bouncy' }
 
-    showStory(storyText) {
-      this.recorderContainer.style.display = 'none';
-      this.storyContainer.style.display = 'flex';
-      
-      const paragraphs = storyText.split('\n').filter(p => p.trim() !== '');
-      this.storyText.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-      
-      this.storyText.setAttribute('aria-live', 'polite');
-      this.fetchVoice(storyText);
+        const renderSpans = (text) => text.split(' ').map((w, i) => {
+          const em = this.emotionData.find(e => e.word_index === i);
+          const emClass = em ? `emotion-${em.emotion}` : '';
+          return `<span class="word-span ${emClass}" data-index="${i}">${w}</span>`;
+        }).join(' ');
+        
+        this.storyText.innerHTML = renderSpans(data.story || '');
+        this.lullabyText.innerHTML = renderSpans(data.lullaby || '');
+        
+        await this.fetchVoice((data.story || '') + ' ' + (data.lullaby || ''));
+      } catch (err) {
+        this.errorText.textContent = "Failed to generate story.";
+      }
     }
 
     async fetchVoice(text) {
-      this.ttsStatus.style.display = 'block';
-      this.ttsStatus.textContent = this.dict.tts_preparing;
-      this.playbackControls.style.display = 'none';
-      this.tapToPlayBtn.style.display = 'none';
-      
       try {
+        const token = localStorage.getItem('cloned_voice_token') || '';
         const response = await fetch('/api/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+          body: JSON.stringify({ text, token })
         });
-        
-        if (!response.ok) {
-          throw new Error('TTS API failed');
-        }
-        
         const blob = await response.blob();
-        this.audioUrl = URL.createObjectURL(blob);
-        this.storyAudio = new Audio(this.audioUrl);
-        
-        this.storyAudio.addEventListener('play', () => {
-          this.playIcon.style.display = 'none';
-          this.pauseIcon.style.display = 'block';
-        });
-        
-        this.storyAudio.addEventListener('pause', () => {
-          this.playIcon.style.display = 'block';
-          this.pauseIcon.style.display = 'none';
-        });
-        
-        this.storyAudio.addEventListener('ended', () => {
-          if (!this.storyAudio.loop) {
-            this.playIcon.style.display = 'block';
-            this.pauseIcon.style.display = 'none';
-          }
-        });
-        
-        this.ttsStatus.style.display = 'none';
-        
-        try {
-          await this.storyAudio.play();
-          this.playbackControls.style.display = 'flex';
-        } catch (err) {
-          this.tapToPlayBtn.style.display = 'inline-block';
-        }
+        await this.initWebAudio(blob, text.split(' ').length);
       } catch (err) {
-        console.error("Error fetching TTS:", err);
-        this.ttsStatus.textContent = this.dict.tts_failed;
+        this.ttsStatus.textContent = "Voice unavailable.";
       }
+    }
+
+    createSpatialBrownNoise() {
+      const bufferSize = this.audioContext.sampleRate * 2; 
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const output = buffer.getChannelData(0);
+      let lastOut = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        output[i] = (lastOut + (0.02 * white)) / 1.02;
+        lastOut = output[i];
+        output[i] *= 3.5; 
+      }
+      const noise = this.audioContext.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+      
+      const filter = this.audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+      noise.connect(filter);
+
+      const panner = this.audioContext.createPanner();
+      panner.panningModel = 'HRTF';
+      panner.distanceModel = 'linear';
+      panner.refDistance = 1;
+      panner.maxDistance = 10;
+      panner.rolloffFactor = 1;
+
+      filter.connect(panner);
+      
+      return { source: noise, panner: panner };
+    }
+
+    createSynthLeaves() {
+      if (!this.audioContext) return;
+      const bufferSize = this.audioContext.sampleRate * 2;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+      const noise = this.audioContext.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+      const filter = this.audioContext.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 1000;
+      const gain = this.audioContext.createGain();
+      gain.gain.value = 0.03;
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      noise.start();
+    }
+
+    createSynthCrickets() {
+      if (!this.audioContext) return;
+      const osc = this.audioContext.createOscillator();
+      osc.type = 'square';
+      osc.frequency.value = 4000;
+      const lfo = this.audioContext.createOscillator();
+      lfo.type = 'square';
+      lfo.frequency.value = 4;
+      const lfoGain = this.audioContext.createGain();
+      lfoGain.gain.value = 1;
+      lfo.connect(lfoGain.gain);
+      const gain = this.audioContext.createGain();
+      gain.gain.value = 0;
+      osc.connect(gain);
+      lfoGain.connect(gain.gain);
+      const finalGain = this.audioContext.createGain();
+      finalGain.gain.value = 0.005;
+      gain.connect(finalGain);
+      finalGain.connect(this.masterGain);
+      osc.start();
+      lfo.start();
+    }
+
+    async initWebAudio(ttsBlob, wordCount) {
+      this.ttsStatus.style.display = 'none';
+      this.playbackControls.style.display = 'flex';
+      
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      const ttsArrayBuffer = await ttsBlob.arrayBuffer();
+      const ttsBuffer = await this.audioContext.decodeAudioData(ttsArrayBuffer);
+      
+      this.ttsSource = this.audioContext.createBufferSource();
+      this.ttsSource.buffer = ttsBuffer;
+      
+      const ambient = this.createSpatialBrownNoise();
+      this.ambientSource = ambient.source;
+      this.pannerNode = ambient.panner;
+      
+      this.masterGain = this.audioContext.createGain();
+      
+      const rainGain = this.audioContext.createGain();
+      rainGain.gain.value = 0.08;
+      this.pannerNode.connect(rainGain);
+      rainGain.connect(this.masterGain);
+      
+      this.ttsSource.connect(this.masterGain);
+      this.masterGain.connect(this.audioContext.destination);
+
+      // Phase 8: Generative Soundscapes from Text Tokens
+      if (this.storyText.innerHTML.includes('[rustling_leaves]')) this.createSynthLeaves();
+      if (this.storyText.innerHTML.includes('[distant_crickets]')) this.createSynthCrickets();
+
+      let panAngle = 0;
+      setInterval(() => {
+        if(this.audioContext && this.audioContext.state === 'running' && this.isPlaying) {
+          panAngle += 0.05;
+          const x = Math.sin(panAngle) * 3;
+          const z = Math.cos(panAngle) * 3;
+          this.pannerNode.positionX.setTargetAtTime(x, this.audioContext.currentTime, 0.1);
+          this.pannerNode.positionZ.setTargetAtTime(z, this.audioContext.currentTime, 0.1);
+        }
+      }, 100);
+
+      // Phase 5: Haptic Storytelling loop
+      if (this.hapticsData.length > 0 && 'vibrate' in navigator) {
+        this.hapticsInterval = setInterval(() => {
+          if (!this.isPlaying) return;
+          const currentMs = this.audioContext.currentTime * 1000;
+          this.hapticsData.forEach(hap => {
+            if (currentMs >= hap.time && currentMs < hap.time + 100 && !hap.fired) {
+              navigator.vibrate(hap.pattern);
+              this.hapticChannel.postMessage({ pattern: hap.pattern }); // Phase 9 Multi-Device
+              hap.fired = true;
+              console.log(`[Haptics] Triggered pattern at ${hap.time}ms`);
+            }
+          });
+        }, 100);
+      }
+
+      const duration = ttsBuffer.duration;
+      const fadeStartTime = duration * 0.8;
+      
+      // Phase 9: Pacing Calibration (-12% if high velocity)
+      const baseRate = this.vocalVelocity === 'high' ? 0.88 : 1.0;
+      const targetRate = this.vocalVelocity === 'high' ? 0.75 : 0.85;
+
+      this.ttsSource.playbackRate.setValueAtTime(baseRate, 0);
+      this.ttsSource.playbackRate.linearRampToValueAtTime(targetRate, duration); 
+
+      this.masterGain.gain.setValueAtTime(1.0, fadeStartTime);
+      this.masterGain.gain.linearRampToValueAtTime(0.80, duration);
+
+      // Phase 9: AudioWorklet & 15-Minute Mic Release
+      try {
+        const workletCode = `
+          class NoiseMonitorProcessor extends AudioWorkletProcessor {
+            process(inputs) {
+              const input = inputs[0];
+              if (input && input.length > 0) {
+                const channelData = input[0];
+                let sum = 0;
+                for (let i = 0; i < channelData.length; i++) sum += channelData[i] * channelData[i];
+                const rms = Math.sqrt(sum / channelData.length);
+                this.port.postMessage({ rms });
+              }
+              return true;
+            }
+          }
+          registerProcessor('noise-monitor', NoiseMonitorProcessor);
+        `;
+        const workletBlob = new Blob([workletCode], { type: 'application/javascript' });
+        await this.audioContext.audioWorklet.addModule(URL.createObjectURL(workletBlob));
+        
+        const playStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const playMicSource = this.audioContext.createMediaStreamSource(playStream);
+        this.micWorklet = new AudioWorkletNode(this.audioContext, 'noise-monitor');
+        playMicSource.connect(this.micWorklet);
+        
+        // 15 Minute Release Timer
+        setTimeout(() => {
+          console.log("[AudioWorklet] 15-minute timer elapsed. Releasing microphone.");
+          playStream.getTracks().forEach(t => t.stop());
+          this.micWorklet.disconnect();
+        }, 15 * 60 * 1000);
+
+        this.micWorklet.port.onmessage = (e) => {
+          if (!this.isPlaying) return;
+          const rms = e.data.rms;
+          // Spike cancellation: Ramp up brown noise by +4dB (gain ~1.5)
+          if (rms > 0.15 && this.masterGain) {
+            console.log("[Cancellation] High frequency noise detected. Ramping Brown Noise.");
+            this.masterGain.gain.setTargetAtTime(1.5, this.audioContext.currentTime, 0.1);
+            this.masterGain.gain.setTargetAtTime(1.0, this.audioContext.currentTime + 2.0, 1.0);
+          }
+          // Sleep onset detection: Continuous silence
+          if (rms < 0.01) {
+            this.silenceCounter += (128 / this.audioContext.sampleRate);
+            if (this.silenceCounter > 60) {
+              console.log("[Sleep Onset] 60s of deep silence detected. Fading out.");
+              if (this.masterGain) this.masterGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 5);
+              setTimeout(() => { if (this.audioContext && this.audioContext.state === 'running') this.audioContext.suspend(); }, 5000);
+              this.silenceCounter = -9999; // Prevent re-trigger
+            }
+          } else {
+            this.silenceCounter = 0;
+          }
+        };
+      } catch (err) {
+        console.warn("Failed to init AudioWorklet for noise cancellation", err);
+      }
+
+      try { if ('wakeLock' in navigator) this.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+
+      this.ambientSource.start();
+      this.ttsSource.start();
+      this.isPlaying = true;
+      this.playIcon.style.display = 'none';
+      this.pauseIcon.style.display = 'block';
+      
+      if (this.speechRecognition) {
+        try { this.speechRecognition.start(); } catch(e){}
+      }
+
+      const avgWordTime = (duration * 1000) / wordCount;
+      const spans = document.querySelectorAll('.word-span');
+      let currentWord = 0;
+      
+      this.wordInterval = setInterval(() => {
+        if (!this.isPlaying) return;
+        
+        // Phase 5: IoT Webhook Dimming Check
+        if (this.audioContext.currentTime >= fadeStartTime && !this.iotTriggered) {
+          this.iotTriggered = true;
+          const webhook = this.iotWebhookInput?.value;
+          if (webhook) {
+            fetch(webhook, { method: 'POST', body: JSON.stringify({ bri: 5, ct: 500 }) })
+              .then(() => console.log("[IoT] Smart Home dimming webhook fired successfully."))
+              .catch(e => console.error("[IoT] Webhook failed:", e));
+          } else {
+            console.log("[IoT] Mock IoT Dimming Triggered (No webhook provided).");
+          }
+        }
+
+        if (currentWord > 0 && spans[currentWord-1]) spans[currentWord-1].classList.remove('glowing');
+        if (spans[currentWord]) {
+          spans[currentWord].classList.add('glowing');
+          coPilot.syncProgress(currentWord);
+        }
+        currentWord++;
+        if (currentWord >= wordCount) {
+          clearInterval(this.wordInterval);
+          clearInterval(this.hapticsInterval);
+        }
+      }, avgWordTime);
+
+      this.ttsSource.onended = () => {
+        this.ambientSource.stop();
+        if (this.wakeLock) this.wakeLock.release();
+        if (this.speechRecognition) this.speechRecognition.stop();
+        this.epiloguePanel.style.display = 'block';
+        this.playbackControls.style.display = 'none';
+
+        // Phase 8: Show Morning Feedback (Mock trigger logic)
+        setTimeout(() => {
+          this.querySelector('#morningFeedback').style.display = 'block';
+          this.querySelectorAll('.feedback-options button').forEach(b => {
+            b.addEventListener('click', () => {
+              this.querySelector('#morningFeedback').innerHTML = "<p>Thank you! Logged to D1.</p>";
+            });
+          });
+        }, 10000);
+      };
     }
 
     togglePlayback() {
-      if (!this.storyAudio) return;
-      if (this.storyAudio.paused) {
-        this.storyAudio.play();
+      if (!this.audioContext) return;
+      if (this.audioContext.state === 'running') {
+        this.audioContext.suspend();
+        this.isPlaying = false;
+        this.playIcon.style.display = 'block';
+        this.pauseIcon.style.display = 'none';
+        if (this.speechRecognition) this.speechRecognition.stop();
       } else {
-        this.storyAudio.pause();
+        this.audioContext.resume();
+        this.isPlaying = true;
+        this.playIcon.style.display = 'none';
+        this.pauseIcon.style.display = 'block';
+        if (this.speechRecognition) {
+          try { this.speechRecognition.start(); } catch(e){}
+        }
       }
     }
 
-    toggleLoop() {
-      if (!this.storyAudio) return;
-      this.storyAudio.loop = !this.storyAudio.loop;
-      if (this.storyAudio.loop) {
-        this.loopBtn.classList.add('active');
-      } else {
-        this.loopBtn.classList.remove('active');
-      }
-    }
-
-    resetUI() {
-      this.storyContainer.style.display = 'none';
-      this.recorderContainer.style.display = 'flex';
-      this.statusText.textContent = this.dict.status_tap;
-      this.errorText.textContent = '';
-      this.retryBtn.style.display = 'none';
-      this.storyText.innerHTML = '';
-      this.audioChunks = [];
-      this.lastAudioBlob = null;
-      
-      if (this.storyAudio) {
-        this.storyAudio.pause();
-        this.storyAudio = null;
-      }
-      if (this.audioUrl) {
-        URL.revokeObjectURL(this.audioUrl);
-        this.audioUrl = null;
-      }
+    async handleEpilogue() {
+      this.epilogueBtn.textContent = "Listening...";
+      setTimeout(() => {
+        this.epilogueBtn.textContent = "Done";
+        this.epiloguePanel.innerHTML = "<p><em>Goodnight...</em></p>";
+      }, 2000);
     }
   }
 

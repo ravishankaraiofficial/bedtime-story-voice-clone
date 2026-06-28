@@ -1,0 +1,133 @@
+---
+---
+<webxr-magic-portal>
+  <button id="startArBtn" class="ar-btn" style="display: none;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+    </svg>
+    Open AR Magic Portal
+  </button>
+</webxr-magic-portal>
+
+<style>
+  .ar-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #df9253;
+    color: #05070d;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(223, 146, 83, 0.4);
+    margin: 1rem auto;
+    transition: transform 0.2s;
+  }
+  .ar-btn:hover {
+    transform: scale(1.05);
+  }
+</style>
+
+<script>
+  class WebXRMagicPortal extends HTMLElement {
+    constructor() {
+      super();
+      this.btn = this.querySelector('#startArBtn');
+      this.svgData = null;
+      
+      this.checkARSupport();
+      
+      // Listen for custom event from AudioRecorder when SVG is ready
+      document.addEventListener('storyGenerated', (e: any) => {
+        if (e.detail && e.detail.svg) {
+          this.svgData = e.detail.svg;
+          this.btn.style.display = 'flex';
+        }
+      });
+      
+      this.btn.addEventListener('click', () => this.initAR());
+    }
+
+    async checkARSupport() {
+      if ('xr' in navigator) {
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        if (supported) console.log("WebXR AR Supported!");
+      }
+    }
+
+    async initAR() {
+      if (!this.svgData) return;
+
+      // Phase 6: Dynamic Import of Heavy 3D Libraries
+      const THREE = await import('three');
+      const { ARButton } = await import('three/examples/jsm/webxr/ARButton.js');
+
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const scene = new THREE.Scene();
+      
+      const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+      
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      document.body.appendChild(arButton);
+      
+      // Auto-click the generated ARButton to start session
+      arButton.click();
+      
+      // Convert SVG string to Texture
+      const img = new Image();
+      const svg = new Blob([this.svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svg);
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#05070d'; // Neo Shen background
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.drawImage(img, 0, 0, 512, 512);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+        
+        // 4:4 ratio plane
+        const geometry = new THREE.PlaneGeometry(0.5, 0.5);
+        const plane = new THREE.Mesh(geometry, material);
+        
+        // Place it 1 meter in front of the user
+        plane.position.set(0, 0, -1);
+        scene.add(plane);
+        
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+
+      // Lights
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+      light.position.set(0.5, 1, 0.25);
+      scene.add(light);
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
+      
+      // Handle exit
+      renderer.xr.addEventListener('sessionend', () => {
+        document.body.removeChild(container);
+        document.body.removeChild(arButton);
+      });
+    }
+  }
+
+  customElements.define('webxr-magic-portal', WebXRMagicPortal);
+</script>

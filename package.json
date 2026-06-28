@@ -9,10 +9,19 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "build:android": "astro build && npx cap sync android"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.6.1",
-    "astro": "^6.4.3"
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "astro": "^6.4.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "three": "^0.185.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.1"
   }
 }

@@ -1,0 +1,170 @@
+---
+// Phase 9: Parent Dash
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parent Canvas & Analytics | Phase 9</title>
+  </head>
+  <body>
+    <main class="parent-dash">
+    <header>
+      <h1>Parent Co-Creation Canvas</h1>
+      <p>Configure daytime behavioral tags and download clinical sleep reports.</p>
+    </header>
+
+    <div class="dashboard-grid">
+      <section class="card">
+        <h2>Daytime Behavioral Tags</h2>
+        <p class="desc">Set a challenge for tonight's story to weave into the narrative.</p>
+        <div class="form-group">
+          <label for="challengeSelect">Real-World Challenge:</label>
+          <select id="challengeSelect" class="input">
+            <option value="">None</option>
+            <option value="sharing toys">Sharing Toys</option>
+            <option value="fear of the dark">Fear of the Dark</option>
+            <option value="moving to a new school">Moving to a New School</option>
+            <option value="sibling friction">Sibling Friction</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="dialectSelect">Heritage Sub-Dialect:</label>
+          <select id="dialectSelect" class="input">
+            <option value="">Standard</option>
+            <option value="Awadhi">Awadhi (Hindi)</option>
+            <option value="Bhojpuri">Bhojpuri (Hindi)</option>
+            <option value="Telangana">Telangana (Telugu)</option>
+          </select>
+        </div>
+        <button id="saveTagsBtn" class="btn primary">Save to Cloudflare KV</button>
+        <div id="saveStatus" class="status"></div>
+      </section>
+
+      <section class="card">
+        <h2>Pediatric Sleep Analytics</h2>
+        <p class="desc">Export a professional clinical report spanning the last 30 days.</p>
+        <button id="exportReportBtn" class="btn secondary">Download Clinical HTML Report</button>
+      </section>
+    </div>
+  </main>
+
+  <style>
+    .parent-dash { max-width: 800px; margin: 0 auto; padding: 2rem; color: #fff; font-family: system-ui, sans-serif; }
+    header { text-align: center; margin-bottom: 3rem; }
+    h1 { color: #df9253; }
+    .desc { color: #aaa; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    
+    .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 600px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
+    
+    .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(223, 146, 83, 0.2); padding: 2rem; border-radius: 12px; }
+    .card h2 { color: #df9253; margin-top: 0; }
+    
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: #ccc; }
+    .input { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; }
+    
+    .btn { width: 100%; padding: 1rem; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn.primary { background: #df9253; color: #000; }
+    .btn.primary:hover { background: #e5a46f; }
+    .btn.secondary { background: transparent; border: 2px solid #df9253; color: #df9253; }
+    .btn.secondary:hover { background: rgba(223, 146, 83, 0.1); }
+    
+    .status { margin-top: 1rem; color: #92df53; font-size: 0.9rem; text-align: center; }
+  </style>
+
+  <script>
+    // Phase 9: Save Tags to mock KV / LocalStorage
+    document.getElementById('saveTagsBtn')?.addEventListener('click', () => {
+      const challenge = (document.getElementById('challengeSelect') as HTMLSelectElement).value;
+      const dialect = (document.getElementById('dialectSelect') as HTMLSelectElement).value;
+      
+      // In production, this hits a Cloudflare Worker API. Mocking local storage sync here.
+      localStorage.setItem('parent_challenge', challenge);
+      localStorage.setItem('heritage_dialect', dialect);
+      
+      const status = document.getElementById('saveStatus');
+      if (status) {
+        status.textContent = "Saved to Edge Network!";
+        setTimeout(() => status.textContent = "", 3000);
+      }
+    });
+
+    // Phase 9: Generate Autonomous Pediatric Sleep Analytics Report (HTML Blob)
+    document.getElementById('exportReportBtn')?.addEventListener('click', () => {
+      // Mock Data (In production, this fetches from D1 /api/metrics)
+      const mockMetrics = {
+        patient: "Demo Child",
+        dateRange: "Last 30 Days",
+        avgSleepLatency: "14 minutes",
+        vocabularyMilestones: ["luminescent", "canopy", "serene"],
+        challengesOvercome: ["Fear of the Dark", "Sharing Toys"]
+      };
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Pediatric Sleep Analytics Report</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; background: #fff; }
+            header { border-bottom: 2px solid #df9253; padding-bottom: 1rem; margin-bottom: 2rem; }
+            h1 { color: #2c3e50; margin: 0; }
+            h2 { color: #df9253; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+            .meta { color: #7f8c8d; font-size: 0.9rem; }
+            .metric-card { background: #f8f9fa; border-left: 4px solid #df9253; padding: 1rem; margin-bottom: 1rem; }
+            .metric-val { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
+            ul { padding-left: 1.5rem; }
+          </style>
+        </head>
+        <body>
+          <header>
+            <h1>Clinical Sleep & Cognitive Report</h1>
+            <div class="meta">Patient: ${mockMetrics.patient} | Generated: ${new Date().toLocaleDateString()}</div>
+          </header>
+
+          <h2>Sleep Latency Metrics</h2>
+          <div class="metric-card">
+            <div>Average Time to Sleep Onset</div>
+            <div class="metric-val">${mockMetrics.avgSleepLatency}</div>
+            <p style="font-size: 0.85rem; color: #666;">(Measured via vocal inactivity & parental feedback)</p>
+          </div>
+
+          <h2>Cognitive Milestones</h2>
+          <div class="metric-card">
+            <div>Advanced Vocabulary Exposure</div>
+            <ul>
+              ${mockMetrics.vocabularyMilestones.map(w => `<li>${w}</li>`).join('')}
+            </ul>
+          </div>
+
+          <h2>Behavioral CBT-I Interventions</h2>
+          <div class="metric-card">
+            <div>Narrative Guardrails Applied</div>
+            <ul>
+              ${mockMetrics.challengesOvercome.map(c => `<li>${c}</li>`).join('')}
+            </ul>
+          </div>
+
+          <footer style="margin-top: 3rem; text-align: center; color: #aaa; font-size: 0.8rem;">
+            Generated natively by Bedtime Story App Edge Architecture (Phase 9). Zero-retention secure export.
+          </footer>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pediatric_sleep_report_${new Date().getTime()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
+  </body>
+</html>

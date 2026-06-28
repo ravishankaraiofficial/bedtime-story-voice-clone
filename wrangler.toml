@@ -1,0 +1,16 @@
+name = "bedtime-story-app"
+compatibility_date = "2024-09-23"
+compatibility_flags = [ "nodejs_compat" ]
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "e4c0c0ae10ec465f8e1945191678e22f"
+
+[[kv_namespaces]]
+binding = "STORY_KV"
+id = "cc9b3fccd48242d1a9804938a1119969"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bedtime-story-d1"
+database_id = "b6edb39c-6ac3-4ab7-aaf8-2f2e463e0f52"

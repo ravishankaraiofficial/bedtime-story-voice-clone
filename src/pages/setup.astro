@@ -1,0 +1,163 @@
+---
+import COPPA from '../components/COPPA.astro';
+import StoryExporter from '../components/StoryExporter.astro';
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parent Setup Dashboard</title>
+  </head>
+  <body>
+    <main class="app-container">
+      <header class="header">
+        <h1>Parent Setup Dashboard</h1>
+        <p>Micro-Sample Voice Persona Cloning</p>
+      </header>
+
+      <section class="setup-section">
+        <div class="card">
+          <h2>Create Your Voice Clone</h2>
+          <p class="desc">Record a 60-second sample of your voice. The system will securely generate an acoustic token to read stories in your voice. (Currently mocking token generation).</p>
+          
+          <button id="cloneBtn" class="primary-btn">Start 60s Recording</button>
+          
+          <div id="cloneStatus" class="status-text"></div>
+        </div>
+      </section>
+
+      <section class="setup-section" style="margin-top: 2rem;">
+        <StoryExporter />
+      </section>
+
+      <COPPA />
+
+      <a href="/" class="back-link">Return to Story Recorder</a>
+    </main>
+
+    <script>
+      const cloneBtn = document.getElementById('cloneBtn');
+      const cloneStatus = document.getElementById('cloneStatus');
+      let isRecording = false;
+
+      cloneBtn?.addEventListener('click', () => {
+        if (isRecording) return;
+        isRecording = true;
+        cloneBtn.textContent = "Recording...";
+        cloneBtn.style.opacity = '0.5';
+        cloneStatus.textContent = "Please read a short paragraph aloud...";
+        
+        // Mock a 3 second recording for UX purposes
+        setTimeout(() => {
+          isRecording = false;
+          cloneBtn.textContent = "Voice Cloned Successfully!";
+          cloneBtn.style.opacity = '1';
+          cloneStatus.textContent = "Acoustic token generated and saved securely.";
+          
+          // Mock token generation
+          const mockToken = "clone_tk_" + Math.random().toString(36).substring(2, 15);
+          localStorage.setItem('cloned_voice_token', mockToken);
+        }, 3000);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-color-top: #0a1020;
+    --bg-color-bottom: #05070d;
+    --text-primary: #e6e2d8;
+    --text-secondary: #9c9990;
+    --accent-glow: rgba(223, 146, 83, 0.15);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at 50% 20%, var(--bg-color-top) 0%, var(--bg-color-bottom) 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 3rem 1.5rem;
+    box-sizing: border-box;
+  }
+
+  .header h1 {
+    font-family: "Georgia", serif;
+    font-size: 1.85rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+  }
+  
+  .header p {
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .card h2 {
+    font-size: 1.2rem;
+    margin-top: 0;
+    font-weight: 500;
+  }
+
+  .desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+
+  .primary-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #df9253;
+    color: #05070d;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .primary-btn:hover {
+    transform: scale(1.02);
+  }
+
+  .status-text {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #df9253;
+    text-align: center;
+    min-height: 1rem;
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+  }
+
+  .back-link:hover {
+    color: var(--text-primary);
+  }
+</style>

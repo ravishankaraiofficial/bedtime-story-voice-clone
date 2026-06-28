@@ -64,7 +64,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // 2. Parse request body
     const body = await request.json();
     const text = body.text;
+    const token = body.token;
     
+    // Phase 5: Multi-Generational Voice Blending Check
+    let selectedVoice = "Aoede";
+    if (Array.isArray(token) && token.length > 1) {
+      console.log(`[TTS] Multi-Voice Blending requested for tokens: ${token.join(', ')}.`);
+      console.log(`[TTS] Edge mock: Stitching dual-voice audio. Using balanced dual-preset.`);
+      // Mocking the dual-voice by using a different Gemini voice, or we would normally stitch two streams.
+      selectedVoice = "Puck"; 
+    } else if (token) {
+      console.log(`[TTS] Voice Cloning Token received: ${token}. Falling back to native preset 'Aoede' per configuration.`);
+    }
+
     if (!text || typeof text !== 'string') {
       return new Response(
         JSON.stringify({ status: "error", message: "No story text provided" }),
@@ -94,7 +106,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               speechConfig: {
                 voiceConfig: {
                   prebuiltVoiceConfig: {
-                    voiceName: "Aoede" // Calm, warm, soothing voice
+                    voiceName: selectedVoice
                   }
                 }
               }

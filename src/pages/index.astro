@@ -1,5 +1,6 @@
 ---
 import AudioRecorder from '../components/AudioRecorder.astro';
+import COPPA from '../components/COPPA.astro';
 import { languages, i18n } from '../i18n';
 ---
 <html lang="en">
@@ -13,7 +14,7 @@ import { languages, i18n } from '../i18n';
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Noto+Sans+Bengali&family=Noto+Sans+Devanagari&family=Noto+Sans+Gujarati&family=Noto+Sans+Gurmukhi&family=Noto+Sans+Kannada&family=Noto+Sans+Malayalam&family=Noto+Sans+Oriya&family=Noto+Sans+Tamil&family=Noto+Sans+Telugu&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Noto+Nastaliq+Urdu&family=Noto+Sans+Bengali&family=Noto+Sans+Devanagari&family=Noto+Sans+Gujarati&family=Noto+Sans+Gurmukhi&family=Noto+Sans+Kannada&family=Noto+Sans+Malayalam&family=Noto+Sans+Oriya&family=Noto+Sans+Tamil&family=Noto+Sans+Telugu&display=swap" rel="stylesheet">
     
     <script define:vars={{ i18n }}>
       window.i18n = i18n;
@@ -23,6 +24,15 @@ import { languages, i18n } from '../i18n';
         document.documentElement.dir = 'rtl';
       }
       document.documentElement.dataset.lang = savedLang;
+      
+      // Register Service Worker for Offline PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.log('SW registration failed:', err));
+        });
+      }
     </script>
   </head>
   <body>
@@ -43,6 +53,10 @@ import { languages, i18n } from '../i18n';
       <section class="recorder-section">
         <AudioRecorder />
       </section>
+
+      <COPPA />
+
+      <a href="/setup" class="setup-link">Parent Settings (Voice Cloning)</a>
 
       <footer class="footer">
         <p id="uiFooter">Stories are AI-generated and read in an AI voice.</p>
@@ -74,12 +88,22 @@ import { languages, i18n } from '../i18n';
           }
         });
 
-        const dict = window.i18n[code] || window.i18n['en'];
+        const enDict = window.i18n['en'];
+        const dict = window.i18n[code] || enDict;
         
         // Update DOM elements
-        if (title) title.textContent = dict.title;
-        if (subtitle) subtitle.textContent = dict.subtitle;
-        if (footer) footer.textContent = dict.footer;
+        if (title) title.textContent = dict.title || enDict.title;
+        if (subtitle) subtitle.textContent = dict.subtitle || enDict.subtitle;
+        if (footer) footer.textContent = dict.footer || enDict.footer;
+
+        // Update settings labels
+        const ids = ['lblHeritage', 'lblCoHeroes', 'lblChallenge', 'lblWearable', 'lblSmartHome', 'lblScreenless', 'lblDarkRoom', 'lblTheme', 'lblMultiPart', 'lblRecordDesc'];
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.textContent = dict[id] || enDict[id];
+          }
+        });
 
         // Dispatch event for AudioRecorder
         window.dispatchEvent(new CustomEvent('languagechange', { detail: { code, dict } }));
@@ -110,11 +134,14 @@ import { languages, i18n } from '../i18n';
 <style>
   :root {
     color-scheme: dark;
-    --bg-color-top: #0a1020;
-    --bg-color-bottom: #05070d;
-    --text-primary: #e6e2d8;
-    --text-secondary: #9c9990;
-    --accent-glow: rgba(223, 146, 83, 0.15);
+    --bg-color-top: #0a0a1a;
+    --bg-color-bottom: #161026;
+    --text-primary: #f2f2f2;
+    --text-secondary: #a3a3b5;
+    --accent-glow: rgba(223, 146, 83, 0.25);
+    --accent-color: #df9253;
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(255, 255, 255, 0.08);
   }
 
   /* Font mapping via data-lang */
@@ -134,10 +161,10 @@ import { languages, i18n } from '../i18n';
   body {
     margin: 0;
     padding: 0;
-    background: radial-gradient(circle at 50% 20%, var(--bg-color-top) 0%, var(--bg-color-bottom) 100%);
+    background: radial-gradient(125% 125% at 50% 10%, var(--bg-color-top) 0%, var(--bg-color-bottom) 100%);
     background-attachment: fixed;
     color: var(--text-primary);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -151,46 +178,50 @@ import { languages, i18n } from '../i18n';
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: transparent;
+    gap: 0.8rem;
+    padding: 1rem 2rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   }
 
   .lang-btn {
-    background: none;
-    border: none;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
     cursor: pointer;
     font-family: inherit;
-    transition: opacity 0.2s ease, font-weight 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
   }
 
   .lang-btn:hover, .lang-btn:focus-visible {
-    font-weight: bold;
+    background: rgba(255,255,255,0.08);
     color: var(--text-primary);
-  }
-
-  .lang-btn:focus-visible {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: #df9253;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 
   .lang-btn.active {
-    font-weight: bold;
-    color: var(--text-primary);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: #df9253;
+    background: var(--accent-glow);
+    border-color: rgba(223, 146, 83, 0.4);
+    color: var(--accent-color);
+    font-weight: 500;
   }
 
   /* Main Container */
   .app-container {
     width: 100%;
-    max-width: 375px;
-    padding: 2rem 1.5rem;
+    max-width: 480px;
+    padding: 3rem 1.5rem 2rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -198,29 +229,38 @@ import { languages, i18n } from '../i18n';
 
   .header {
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 3.5rem;
+    animation: fadeDown 0.8s ease-out;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .header h1 {
-    font-size: 1.85rem;
-    line-height: 1.35;
-    font-weight: 400;
-    margin-bottom: 1.25rem;
-    letter-spacing: 0.01em;
-    color: var(--text-primary);
-    text-wrap: pretty;
+    font-size: 2.2rem;
+    line-height: 1.25;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    text-wrap: balance;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
 
   html[data-lang="en"] .header h1 {
-    font-family: "Georgia", "Times New Roman", serif;
+    font-family: 'Outfit', sans-serif;
   }
 
   .header p {
-    font-size: 0.95rem;
-    line-height: 1.7;
+    font-size: 1.05rem;
+    line-height: 1.6;
     color: var(--text-secondary);
-    margin: 0;
-    text-wrap: pretty;
+    margin: 0 auto;
+    max-width: 90%;
+    text-wrap: balance;
+    font-weight: 300;
   }
 
   .recorder-section {
@@ -228,18 +268,39 @@ import { languages, i18n } from '../i18n';
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
   }
 
   .footer {
     text-align: center;
-    margin-top: 2rem;
-    padding-bottom: 1rem;
+    margin-top: 3rem;
+    padding-bottom: 2rem;
   }
 
   .footer p {
-    font-size: 0.75rem;
-    color: rgba(156, 153, 144, 0.5);
+    font-size: 0.8rem;
+    color: rgba(163, 163, 181, 0.4);
     margin: 0;
+  }
+
+  .setup-link {
+    display: inline-block;
+    text-align: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin: 2rem auto 0;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+  }
+  
+  .setup-link:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-2px);
   }
 
   /* Toast */
@@ -247,22 +308,24 @@ import { languages, i18n } from '../i18n';
     position: fixed;
     bottom: 2rem;
     left: 50%;
-    transform: translateX(-50%);
-    background-color: #111827;
+    transform: translateX(-50%) translateY(20px);
+    background-color: rgba(17, 24, 39, 0.9);
+    backdrop-filter: blur(10px);
     color: var(--text-primary);
     padding: 0.8rem 1.5rem;
     border-radius: 2rem;
     font-size: 0.9rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.4s ease;
-    border: 1px solid rgba(223, 146, 83, 0.2);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid var(--accent-glow);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     z-index: 100;
     text-align: center;
   }
 
   .toast.show {
     opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 </style>
