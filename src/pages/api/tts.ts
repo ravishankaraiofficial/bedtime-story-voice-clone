@@ -48,7 +48,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // 1. Get API Key safely
     let cloudflareEnv: any;
     try {
-      cloudflareEnv = (locals as any)?.runtime?.env;
+      try {
+        const cfWorkers = await import('cloudflare:workers');
+        cloudflareEnv = cfWorkers.env || {};
+      } catch (e) {
+        try { cloudflareEnv = (locals as any)?.runtime?.env; } catch(e) { cloudflareEnv = undefined; }
+      }
     } catch (e) {
       cloudflareEnv = undefined;
     }

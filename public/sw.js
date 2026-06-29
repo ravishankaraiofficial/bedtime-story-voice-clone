@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bedtime-emergency-v1';
+const CACHE_NAME = 'bedtime-emergency-v2';
 const ASSETS = [
   '/',
   '/favicon.svg',
@@ -19,7 +19,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
+        // Delete all old caches aggressively to fix the caching bug
         if (key !== CACHE_NAME) {
+          console.log('[SW] Deleting old cache:', key);
           return caches.delete(key);
         }
       }));
@@ -31,10 +33,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
+  // NETWORK-FIRST STRATEGY: 
+  // Always try network first to ensure fresh HTML and assets.
+  // Fallback to cache ONLY if offline.
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached asset if offline, else fetch
-      return response || fetch(event.request).catch(() => {
+    fetch(event.request).catch(() => {
+      return caches.match(event.request).then((response) => {
+        if (response) return response;
+        
         // Fallback for API requests if offline
         if (event.request.url.includes('/api/story')) {
           return new Response(

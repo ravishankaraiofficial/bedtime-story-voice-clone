@@ -3,7 +3,15 @@ import type { APIRoute } from 'astro';
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // 1. Setup Environment & Bindings
-    const env = (locals as any)?.runtime?.env || {};
+    let env: any = {};
+    try {
+      const cfWorkers = await import('cloudflare:workers');
+      env = cfWorkers.env || {};
+    } catch (e) {
+      // Fallback for environments without cloudflare:workers (like local Node.js without adapter)
+      try { env = (locals as any)?.runtime?.env || {}; } catch(e) {}
+    }
+    
     const apiKey = env.GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY;
 
     if (!apiKey) {

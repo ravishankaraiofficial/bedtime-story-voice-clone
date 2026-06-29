@@ -2,7 +2,13 @@ import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    const env = (locals as any)?.runtime?.env || {};
+    let env: any = {};
+    try {
+      const cfWorkers = await import('cloudflare:workers');
+      env = cfWorkers.env || {};
+    } catch (e) {
+      try { env = (locals as any)?.runtime?.env || {}; } catch(e) {}
+    }
     
     // Parse userId from URL or default to 'demo-user-123'
     const url = new URL(request.url);
